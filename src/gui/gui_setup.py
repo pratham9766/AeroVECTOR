@@ -10,6 +10,7 @@ import tkinter as tk
 from tkinter import filedialog
 import sys
 import os
+import traceback
 from src import files
 from src.gui import gui_functions as fun
 from src.simulation import main_simulation as sim
@@ -688,8 +689,11 @@ def create_run_sim_tab(notebook):
              bg="#CCFFCC").grid(row=8, column=0, columnspan=2, sticky="NESW")
 
     def button_run_sim():
-        sim.run_simulation()
-        sim.run_3d()
+        try:
+            sim.run_simulation()
+            sim.run_3d()
+        except Exception:
+            traceback.print_exc()
 
     run_sim_button = tk.Button(run_sim_tab.tab,
                                text="Run Simulation",

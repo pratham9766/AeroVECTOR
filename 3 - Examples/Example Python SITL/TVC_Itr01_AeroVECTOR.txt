@@ -1,11 +1,11 @@
-Motor = Estes_F15.csv
-Mass Liftoff = 1.314
-Mass Burnout = 1.231
+Motor = our_tvc_motor_neeche_wala.csv
+Mass Liftoff = 0.897
+Mass Burnout = 0.814
 Iy Liftoff = 0.110
 Iy Burnout = 0.110
-Xcg Liftoff = 0.36
-Xcg Burnout = 0.354
-Xt = 0.057
+Xcg Liftoff = 0.355
+Xcg Burnout = 0.347
+Xt = 0.57
 Servo Resolution = 1
 Max Actuator Angle = 12
 Actuator Reduction = 1
@@ -26,17 +26,17 @@ Hide Forces = False
 Variable FOV = False
 Hide cg = True
 Camera Type = Fixed
-Slow mo = 1
+Slow mo = 5
 Force Scale = 0.2
 FOV = 4
 ###=#
 Torque Controller = False
 Anti Windup = True
 Input Type = Up
-Kp = 0
-Ki = 0
-Kd = 0
-K All = 1
+Kp = 5
+Ki = 1.1
+Kd = 2
+K All = 0.3
 K Damping = 0
 Reference Thrust = 30
 Input = 0
@@ -82,8 +82,8 @@ Ninth Plot = Off
 Tenth Plot = Off
 ###=#
 False
-True
-True
+False
+False
 False
 False
 0,0

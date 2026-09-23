@@ -67,9 +67,9 @@ class SITLProgram:
         # ----------------------------
         # DHRUVA PID gains
         # ----------------------------
-        self.pitch_kp = 0.0
-        self.pitch_ki = 0.0
-        self.pitch_kd = 0.0
+        self.pitch_kp = 1.5
+        self.pitch_ki = 2.4
+        self.pitch_kd = 5.2
         self.derivative_filter = 0.90
 
         self.pitch_setpoint_deg = 0.0

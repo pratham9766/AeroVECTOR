@@ -42,7 +42,7 @@ unless you are using SITL.
 
 import sys
 import os
-os.chdir(os.path.dirname(sys.argv[0]))
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
 import matplotlib
 import tkinter as tk
 from tkinter import ttk

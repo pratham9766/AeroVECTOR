@@ -1286,18 +1286,32 @@ def run_3d():
 
     if toggle_3d is False:
         plt.draw()
-        plt.show()
+        plt.show(block=False)
         print("\n")
     if toggle_3d is True:
-        try:
-            labels.delete()
-            scene.delete()
-            for i in range(len(widgets)):
-                widgets[i].delete()
-            for i in range(len(widgets_text)):
-                widgets_text[i].text = ""
-        except:
-            pass
+        for widget in widgets:
+            try:
+                widget.delete()
+            except Exception:
+                pass
+        for widget_text in widgets_text:
+            try:
+                widget_text.text = ""
+            except Exception:
+                pass
+        for graphic in (globals().get("labels"), globals().get("scene")):
+            if graphic is None:
+                continue
+            try:
+                graphic.delete()
+            except Exception:
+                pass
+
+        if len(t_3d) < 3:
+            print("Not enough 3D simulation data to play back.")
+            plt.draw()
+            plt.show(block=False)
+            return
 
         max_hight = 0
         for i in range(len(position_3d)):
@@ -2220,7 +2234,12 @@ def run_3d():
 
 
         """ Simualtion Control #############################################"""
-        t_total = t_3d[-3] - t_3d[0]
+        t_total = t_3d[-1] - t_3d[0]
+        if t_total <= 0:
+            print("Invalid 3D simulation time range.")
+            plt.draw()
+            plt.show(block=False)
+            return
         t_step = (t_3d[-1]-t_3d[0]) / len(t_3d)
         super_coarse_step = t_total/5 / t_step
         coarse_step = 1 / t_step
@@ -2229,37 +2248,43 @@ def run_3d():
         j = 1
         list_length = len(theta_3d)-2
         while True:
-            vp.rate(len(t_3d)/t_total/slow_mo)
-            play_video = skip_flag is False and pause_resume_flag is False and i < list_length
-            slider_time_3d(slider_time)
-            if play_video is True:
-                run_3d_graphics(i, j)
-                run_camera_3d(i, j)
-                i += 1
-                j += 1
-            if skip_flag is True:
-                if skip_ahead_flag is True:
-                    for t in range(skip_steps):
-                        if i >= list_length-1:
-                            break
-                        run_3d_graphics(i, j)
-                        run_camera_3d(i, j)
-                        i += 1
-                        j += 1
-                    skip_flag = False
-                    skip_ahead_flag = False
-                if skip_backwards_flag is True:
-                    for t in range(skip_steps):
-                        if i <= 1:
-                            break
-                        i -= 1
-                        j -= 1
-                        run_3d_graphics(j, i)
-                        run_camera_3d(j, i)
-                        motor.clear_trail()
-                    skip_flag = False
-                    skip_backwards_flag = False
+            try:
+                vp.rate(len(t_3d)/t_total/slow_mo)
+                play_video = skip_flag is False and pause_resume_flag is False and i < list_length
+                slider_time_3d(slider_time)
+                if play_video is True:
+                    run_3d_graphics(i, j)
+                    run_camera_3d(i, j)
+                    i += 1
+                    j += 1
+                if skip_flag is True:
+                    if skip_ahead_flag is True:
+                        for t in range(skip_steps):
+                            if i >= list_length-1:
+                                break
+                            run_3d_graphics(i, j)
+                            run_camera_3d(i, j)
+                            i += 1
+                            j += 1
+                        skip_flag = False
+                        skip_ahead_flag = False
+                    if skip_backwards_flag is True:
+                        for t in range(skip_steps):
+                            if i <= 1:
+                                break
+                            i -= 1
+                            j -= 1
+                            run_3d_graphics(j, i)
+                            run_camera_3d(j, i)
+                            motor.clear_trail()
+                        skip_flag = False
+                        skip_backwards_flag = False
+            except Exception as error:
+                print("3D playback stopped:", error)
+                break
             if break_flag_button is True:
                 break
+            if i >= list_length and pause_resume_flag is False:
+                break
         plt.draw()
-        plt.show()
+        plt.show(block=False)
