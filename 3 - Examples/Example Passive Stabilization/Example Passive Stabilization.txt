@@ -1,0 +1,101 @@
+Motor = Estes_F15.csv
+Mass Liftoff = 0.452
+Mass Burnout = 0.390
+Iy Liftoff = 0.0662
+Iy Burnout = 0.0601
+Xcg Liftoff = 0.55
+Xcg Burnout = 0.51
+Xt = 0.85
+Servo definition = 1
+Max Actuator Angle = 0
+Actuator Reduction = 1
+Initial Misalignment = 0
+Servo Compensation = 2.1
+Wind = 5
+Wind Gust = 0.1
+Launch Rod Length = 2
+Launch Rod Angle = -5
+Motor Misalignment = 0.1
+Rocket Roughness = 40
+Stabilization Fin Roughness = 40
+Control Fin Roughness = 60
+###=#
+Toggle 3D = True
+Camera Shake Toggle = False
+Hide Forces = False
+Variable FOV = False
+Hide cg = True
+Camera Type = Fixed
+Slow mo = 1
+Force Scale = 0.2
+FOV = 1.2
+###=#
+Torque Controller = False
+Anti Windup = False
+Input Type = Step [º]
+Kp = 0
+Ki = 0
+Kd = 0
+K All = 0
+K Damping = 0
+Reference Thrust = 0
+Input = 0
+Input time = 0
+Launch Time = 0
+Servo Sample Time = 0
+Controller Sample Time = 0
+Maximum Sim Duration = 12
+Sim Delta T = 0.005
+Export T = 0.1
+Launch Altitude = 0
+Initial Altitude = 0
+Initial Vertical Velocity = 0
+Initial Horizontal Velocity = 0
+Initial Pitch Angle = 0
+Initial Pitch Rate = 0
+###=#
+Activate SITL = True
+Use Sensor Noise = False
+Python SITL=True
+File = example_parachute
+Port = COM3
+Baudrate = 115200
+Gyroscope SD = 0
+Accelerometer SD = 0
+Altimeter SD = 0
+GNSS Pos SD = 0
+GNSS Vel SD = 0
+Gyroscope ST = 0.0025
+Accelerometer ST = 0.0025
+Altimeter ST = 0.005
+GNSS ST = 1
+###=#
+First Plot = Pitch Angle [º]
+Second Plot = Total Velocity [m/s]
+Third Plot = Altitude [m]
+Fourth Plot = Distance Downrange [m]
+Fifth Plot = Off
+Sixth Plot = Off
+Seventh Plot = Off
+Eighth Plot = Off
+Ninth Plot = Off
+Tenth Plot = Off
+###=#
+True
+True
+True
+False
+False
+0,0
+0.2 , 0.05
+1 , 0.05
+Fins_s
+0.93 , 0.07
+0.02 , 0.04
+0.027
+0.003
+Fins_c
+0,0
+0,0
+0
+0
