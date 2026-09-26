@@ -80,6 +80,22 @@ parachute_deploy_time = 0.0
 parachute_3d = [False]
 auto_parachute_tilt_abort = True
 
+## SITL GAINS — editable live from the "SITL Gains" GUI tab
+# These are injected into the SITLProgram object at sim start.
+# Any attribute present here that also exists on the SITLProgram
+# will be overwritten (matching attribute names expected by DHRUVA SITL).
+sitl_gains = {
+    "ascent_pitch_kp":           0.05,
+    "ascent_pitch_ki":           0.04,
+    "ascent_pitch_kd":           0.01,
+    "ascent_derivative_filter":  0.90,
+    "descent_pitch_kp":          0.05,
+    "descent_pitch_ki":          0.04,
+    "descent_pitch_kd":          0.01,
+    "descent_derivative_filter": 0.90,
+    "loaded": False,   # True once the GUI tab has explicitly applied values
+}
+
 ## OTHER PARAMETERS OR VARIABLES
 cn = 0
 ca = 0
@@ -1364,6 +1380,35 @@ def run_sim_python_sitl():
     python_sitl = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(python_sitl)
     python_sitl_program = python_sitl.SITLProgram()
+
+    # ----------------------------------------------------------------
+    # Read gains from the SITL Gains GUI tab then inject into
+    # SITLProgram. Works with any module that exposes these attributes.
+    # ----------------------------------------------------------------
+    global sitl_gains
+    try:
+        _vals = gui.sitl_gains_tab.get_configuration_destringed()
+        _keys_ordered = [
+            "ascent_pitch_kp",  "ascent_pitch_ki",
+            "ascent_pitch_kd",  "ascent_derivative_filter",
+            "descent_pitch_kp", "descent_pitch_ki",
+            "descent_pitch_kd", "descent_derivative_filter",
+        ]
+        for _i, _key in enumerate(_keys_ordered):
+            sitl_gains[_key] = float(_vals[_i])
+    except Exception:
+        pass  # Tab not yet initialised or bad value - keep existing sitl_gains
+    for _key in [k for k in sitl_gains if k != "loaded"]:
+        if hasattr(python_sitl_program, _key):
+            setattr(python_sitl_program, _key, sitl_gains[_key])
+    print("[SITL Gains] Ascent  Kp={:.4f} Ki={:.4f} Kd={:.4f} F={:.3f}".format(
+        sitl_gains["ascent_pitch_kp"],  sitl_gains["ascent_pitch_ki"],
+        sitl_gains["ascent_pitch_kd"],  sitl_gains["ascent_derivative_filter"]))
+    print("[SITL Gains] Descent Kp={:.4f} Ki={:.4f} Kd={:.4f} F={:.3f}".format(
+        sitl_gains["descent_pitch_kp"], sitl_gains["descent_pitch_ki"],
+        sitl_gains["descent_pitch_kd"], sitl_gains["descent_derivative_filter"]))
+    # ----------------------------------------------------------------
+
     python_sitl_program.everything_that_is_outside_functions()
     python_sitl_program.void_setup()
 

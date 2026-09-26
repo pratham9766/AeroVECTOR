@@ -48,6 +48,8 @@ conf_3d_tab = fun.Tab()
 sim_setup_tab = fun.Tab()
 # sitl
 conf_sitl_tab = fun.Tab()
+# SITL Gains
+sitl_gains_tab = fun.Tab()
 # Sim Run
 run_sim_tab = fun.Tab()
 
@@ -620,6 +622,100 @@ def create_simulation_setup_tab(notebook):
     save_conf_controller_button.place(x=432, y=535)
     sim_setup_tab.create_active_file_label()
     sim_setup_tab.configure(10)
+
+
+# SITL GAINS TAB - SITL GAINS TAB - SITL GAINS TAB - SITL GAINS TAB
+def create_sitl_gains_tab(notebook):
+    """
+    Dedicated tab for tuning Python SITL gains without editing the SITL file.
+    Values are injected into SITLProgram attributes at simulation start.
+    """
+    sitl_gains_tab.create_tab(notebook, "SITL Gains")
+
+    # Section header — Ascent
+    tk.Label(sitl_gains_tab.tab, text="Ascent Gains  (Motor 1 burn)",
+             fg="black", bg="#CCFFCC", font=("TkDefaultFont", 10, "bold"),
+             padx=4).grid(row=0, column=0, columnspan=2, sticky="NESW", pady=(8, 2))
+
+    # All 8 entries in ONE call so self.entry is never reset mid-function.
+    # Entries 0-3 = ascent, entries 4-7 = descent.
+    all_names = [
+        "Kp (Ascent) = ",
+        "Ki (Ascent) = ",
+        "Kd (Ascent) = ",
+        "Derivative Filter (Ascent) = ",
+        "Kp (Descent) = ",
+        "Ki (Descent) = ",
+        "Kd (Descent) = ",
+        "Derivative Filter (Descent) = ",
+    ]
+    # Place starting at row 1; descent entries (4-7) will initially land at
+    # rows 5-8, then we move the section label and shift them below it.
+    sitl_gains_tab.create_entry(all_names, 1, 0, "W")
+
+    # Section header — Descent (placed above the 4 descent rows)
+    descent_header = tk.Label(sitl_gains_tab.tab, text="Descent / Motor 2 Gains",
+                              fg="black", bg="#CCFFCC",
+                              font=("TkDefaultFont", 10, "bold"), padx=4)
+    descent_header.grid(row=5, column=0, columnspan=2, sticky="NESW", pady=(12, 2))
+
+    # Move the descent entry labels and entries down by one row
+    # to sit below the header (rows 6-9 instead of 5-8)
+    for i in range(4):
+        fun.move_tk_object(sitl_gains_tab.entry_label[i + 4], 6 + i, 0)
+        fun.move_tk_object(sitl_gains_tab.entry[i + 4],       6 + i, 1)
+
+    # Populate defaults
+    _defaults = ["0.05", "0.04", "0.01", "0.90",
+                 "0.05", "0.04", "0.01", "0.90"]
+    for i, val in enumerate(_defaults):
+        sitl_gains_tab.entry[i].delete(0, tk.END)
+        sitl_gains_tab.entry[i].insert(0, val)
+
+    # Info label
+    tk.Label(
+        sitl_gains_tab.tab,
+        text=("These gains are injected into the Python SITL module\n"
+              "at simulation start. No file editing needed.\n"
+              "Only works if the SITL module exposes the standard\n"
+              "gain attributes (ascent_pitch_kp / descent_pitch_kp ...)."),
+        fg="#555555",
+        justify="left",
+    ).grid(row=11, column=0, columnspan=2, sticky="W", padx=8, pady=(14, 0))
+
+    def button_apply_gains():
+        """Push current entry values to the running simulation's gains dict."""
+        from src.simulation import main_simulation as sim
+        try:
+            vals = sitl_gains_tab.get_configuration_destringed()
+            sim.sitl_gains["ascent_pitch_kp"]           = float(vals[0])
+            sim.sitl_gains["ascent_pitch_ki"]           = float(vals[1])
+            sim.sitl_gains["ascent_pitch_kd"]           = float(vals[2])
+            sim.sitl_gains["ascent_derivative_filter"]  = float(vals[3])
+            sim.sitl_gains["descent_pitch_kp"]          = float(vals[4])
+            sim.sitl_gains["descent_pitch_ki"]          = float(vals[5])
+            sim.sitl_gains["descent_pitch_kd"]          = float(vals[6])
+            sim.sitl_gains["descent_derivative_filter"] = float(vals[7])
+            sim.sitl_gains["loaded"] = True
+            print("[SITL Gains] Applied:",
+                  f"Ascent Kp={vals[0]} Ki={vals[1]} Kd={vals[2]} F={vals[3]} |",
+                  f"Descent Kp={vals[4]} Ki={vals[5]} Kd={vals[6]} F={vals[7]}")
+        except Exception as e:
+            print("[SITL Gains] Error applying gains:", e)
+
+    apply_button = tk.Button(
+        sitl_gains_tab.tab,
+        text="Apply Gains (Live)",
+        command=button_apply_gains,
+        width=22,
+        bg="#2196F3",
+        fg="white",
+        font=("TkDefaultFont", 10, "bold"),
+    )
+    apply_button.place(x=60, y=480)
+
+    sitl_gains_tab.create_active_file_label()
+    sitl_gains_tab.configure(10)
 
 
 # RUN SIM TAB - RUN SIM TAB - RUN SIM TAB - RUN SIM TAB - RUN SIM TAB
