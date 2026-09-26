@@ -72,6 +72,13 @@ RAD2DEG = 1 / DEG2RAD
 wind = 2 #Wind speed in m/s (positive right to left)
 wind_distribution = 0.1  # wind*wind_distribution = max gust speed
 
+## PARACHUTE PARAMETERS
+PARACHUTE_CD = 1.5
+PARACHUTE_DESCENT_RATE = 4.0  # Target descent velocity [m/s]
+parachute_deployed = False
+parachute_deploy_time = 0.0
+parachute_3d = [False]
+
 ## OTHER PARAMETERS OR VARIABLES
 cn = 0
 ca = 0
@@ -603,6 +610,10 @@ def reset_variables():
     send_gnss_pos = 0
     send_gnss_vel = 0
     global motor2_ignited, apogee_detected, apogee_altitude, apogee_time, v_glob_prev
+    global parachute_deployed, parachute_deploy_time, parachute_3d
+    parachute_deployed = False
+    parachute_deploy_time = 0.0
+    parachute_3d = [False]
     motor2_ignited = False
     apogee_detected = False
     apogee_altitude = 0.0
@@ -694,8 +705,16 @@ def update_parameters():
                 should_ignite = True
 
         if should_ignite:
-            if rocket.activate_motor2(t):
-                motor2_ignited = True
+            global parachute_deployed, parachute_deploy_time
+            tilt_angle = abs(theta)
+            if not parachute_deployed and tilt_angle > Actuator_max:
+                parachute_deployed = True
+                parachute_deploy_time = t
+                print(f"\n[SAFETY ABORT] Rocket tilt ({tilt_angle*RAD2DEG:.2f}°) exceeds TVC max capability ({Actuator_max*RAD2DEG:.2f}°)")
+                print(f"PARACHUTE DEPLOYED at t={t:.2f}s, altitude={position_global[0]:.2f}m. Motor 2 ignition canceled.")
+            elif not parachute_deployed:
+                if rocket.activate_motor2(t):
+                    motor2_ignited = True
 
     v_glob_prev = [v_glob[0], v_glob[1]]
 
@@ -767,7 +786,28 @@ def simulation():
     """
     v_d = 0  # 0 uses Local and Global Velocities, 1 uses vector derivatives.
 
-    if rocket.is_in_the_pad(position_global[0]) and thrust < m*g:
+    global parachute_deployed, parachute_deploy_time, PARACHUTE_CD, PARACHUTE_DESCENT_RATE
+    if parachute_deployed:
+        # Lightweight parachute descent model: Weight, Aerodynamic Drag (Cd=1.5), and Air Density
+        # Balanced for steady descent rate of 4 m/s:
+        # F_drag = 0.5 * rho * Cd * A * v^2 = m * g => A_eff = (2 * m * g) / (rho * Cd * v_target^2)
+        rho_curr = rocket.rho if hasattr(rocket, 'rho') and rocket.rho > 0 else 1.225
+        area_eff = (2.0 * m * g) / (rho_curr * PARACHUTE_CD * (PARACHUTE_DESCENT_RATE ** 2))
+
+        # Vertical velocity and drag (global vertical axis)
+        v_vert = v_glob[0]
+        drag_vert = 0.5 * rho_curr * PARACHUTE_CD * area_eff * v_vert * abs(v_vert)
+
+        # Lateral velocity and drag
+        v_lat = v_glob[1]
+        drag_lat = 0.5 * rho_curr * PARACHUTE_CD * area_eff * v_lat * abs(v_lat)
+
+        accx = -g - (drag_vert / m)
+        accz = -drag_lat / m
+        accQ = -4.0 * Q - 6.0 * theta  # Restoring pendulum torque to stabilize vehicle upright under canopy
+        force_app_point = 0
+        normal_force = 0
+    elif rocket.is_in_the_pad(position_global[0]) and thrust < m*g:
         accx = 0
         accz = 0
         accQ = 0
@@ -878,6 +918,7 @@ def simulation():
         fin_force_3d.append(fin_force)
         aoa_3d.append(aoa)
         setpoint_3d.append(setpoint)
+        parachute_3d.append(parachute_deployed)
         t_timer_3d = t
 
 
@@ -1073,6 +1114,8 @@ def plot_plots():
     if rocket.motor2_active and rocket.t_launch2 is not None:
         plt.axvline(x=rocket.t_launch2, color="green", linewidth=1, linestyle="--", label="Motor 2 Ignition")
         plt.axvline(x=rocket.t_launch2 + rocket.t_burnout2, color="blue", linewidth=1, linestyle="--", label="Motor 2 Burnout")
+    if parachute_deployed:
+        plt.axvline(x=parachute_deploy_time, color="orange", linewidth=1.5, linestyle="-.", label="Parachute Deployed")
 
     # Second Plot
     if s[5] != "Off" or s[6] != "Off" or s[7] != "Off" or s[8] != "Off" or s[9] != "Off":
@@ -1108,6 +1151,8 @@ def plot_plots():
         if rocket.motor2_active and rocket.t_launch2 is not None:
             plt.axvline(x=rocket.t_launch2, color="green", linewidth=1, linestyle="--", label="Motor 2 Ignition")
             plt.axvline(x=rocket.t_launch2 + rocket.t_burnout2, color="blue", linewidth=1, linestyle="--", label="Motor 2 Burnout")
+        if parachute_deployed:
+            plt.axvline(x=parachute_deploy_time, color="orange", linewidth=1.5, linestyle="-.", label="Parachute Deployed")
 
 def export_plots(file_name):
     names = gui.run_sim_tab.get_configuration_destringed()
@@ -1170,7 +1215,10 @@ def run_sim_local():
                                                                              thrust, t)
             timer_run_sim = t
         progress_bar.update(t, sim_duration)
-        plot_data()
+        if parachute_deployed and position_global[0] < -0.1:
+            progress_bar.update(t, t, 0)
+            print("\nParachute Soft Landing!")
+            break
         if position_global[0] < -0.55:
             progress_bar.update(t, t, 0)
             if abs(v_glob[0]) < 2:
@@ -1340,6 +1388,10 @@ def run_sim_python_sitl():
                 timer_gnss = t
         progress_bar.update(t, sim_duration)
         plot_data()
+        if parachute_deployed and position_global[0] < -0.1:
+            progress_bar.update(t, t, 0)
+            print("\nParachute Soft Landing!")
+            break
         if position_global[0] < -0.55:
             progress_bar.update(t, t, 0)
             if abs(v_glob[0]) < 2:
@@ -1777,6 +1829,24 @@ def run_3d():
                                   axis=vp.vector(0, 1, 0), shaftwidth=d/4,
                                   length=L_total*0.7, color=vp.color.blue,
                                   headwidth=2*d/4, headlength=3*d/4)
+
+        # PARACHUTE 3D VISUALS
+        chute_visual_radius = max(d * 2.5, 0.25)
+        parachute_canopy = vp.cylinder(
+            pos=vp.vector(dim_x_floor/2, L_total + 1.2, dim_z_floor/2),
+            axis=vp.vector(0, 0.05, 0),
+            radius=chute_visual_radius,
+            color=vp.vector(1.0, 0.5, 0.0),
+            opacity=0.8,
+            visible=False
+        )
+        parachute_cord = vp.cylinder(
+            pos=vp.vector(dim_x_floor/2, L_total, dim_z_floor/2),
+            axis=vp.vector(0, 1.2, 0),
+            radius=d * 0.04,
+            color=vp.color.gray(0.4),
+            visible=False
+        )
 
         """buttons & Sliders ##############################################"""
         break_flag_button = False
@@ -2246,6 +2316,16 @@ def run_3d():
                 T_fin_neg.rotate(delta_theta,
                                  axis=vp.vector(0,0,1),
                                  origin=vect_cg)
+            # Parachute 3D Animation Update
+            chute_active = parachute_3d[i] if i < len(parachute_3d) else False
+            parachute_canopy.visible = chute_active
+            parachute_cord.visible = chute_active
+            if chute_active:
+                nose_y = rocket_3d.pos.y + (L_total/2 - xcg_3d[i])
+                nose_x = rocket_3d.pos.x
+                parachute_canopy.pos = vp.vector(nose_x, nose_y + 1.2, dim_z_floor/2)
+                parachute_cord.pos = vp.vector(nose_x, nose_y, dim_z_floor/2)
+
             if hide_forces is True:
                 Nforce_pos.visible = False
                 Nforce_neg.visible = False
