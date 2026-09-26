@@ -220,6 +220,7 @@ class SaveFile:
         self.conf_controller_names = ["###=#",
                                       "Torque Controller = ",
                                       "Anti Windup = ",
+                                      "Auto Parachute on Tilt = ",
                                       "Input Type = ",
                                       "Kp = ",
                                       "Ki = ",
@@ -466,6 +467,7 @@ class SITLProgram:
                         "0.75"]
         self.conf_controller = ["False",
                                 "True",
+                                "True",
                                 "Step [º]",
                                 "0.4",
                                 "0",
@@ -677,6 +679,9 @@ class SITLProgram:
                     ] + p_old[7:21]
                 self.conf_3d = res[1]
                 self.conf_controller = res[2]
+                if len(self.conf_controller) == 23:
+                    c_old = self.conf_controller
+                    self.conf_controller = [c_old[0], c_old[1], "True"] + c_old[2:]
                 self.conf_sitl = res[3]
                 self.conf_plots = res[4]
                 self.rocket_dim = res[5]

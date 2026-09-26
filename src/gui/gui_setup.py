@@ -587,7 +587,7 @@ def create_sitl_tab(notebook):
 # SIM SETUP TAB - SIM SETUP TAB - SIM SETUP TAB - SIM SETUP TAB - SIM SETUP TAB
 def create_simulation_setup_tab(notebook):
     sim_setup_tab.create_tab(notebook, "Sim Setup")
-    checkboxes = ["Torque Controller", "Anti Windup"]
+    checkboxes = ["Torque Controller", "Anti Windup", "Auto Parachute on Tilt Abort"]
     sim_setup_tab.create_checkboxes(checkboxes, 0, 2, "W")
     combobox_options = [["Step [º]", "Ramp [º/s]", "Up"]]
     names_combobox = [""]

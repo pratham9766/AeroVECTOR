@@ -78,6 +78,7 @@ PARACHUTE_DESCENT_RATE = 4.0  # Target descent velocity [m/s]
 parachute_deployed = False
 parachute_deploy_time = 0.0
 parachute_3d = [False]
+auto_parachute_tilt_abort = True
 
 ## OTHER PARAMETERS OR VARIABLES
 cn = 0
@@ -426,27 +427,42 @@ def update_all_parameters(parameters,conf_3d,conf_controller,conf_sitl, rocket_d
     global input_type, reference_thrust
     global average_T, launch_altitude
     global position_global, position_local, v_glob, Q
-    global export_T
-    input_type = _get_conf(conf_controller, 2, "Step [º]")
-    controller.setup_controller([_get_conf(conf_controller, i, 0.0) for i in range(9)],
+    global export_T, auto_parachute_tilt_abort
+
+    if len(conf_controller) == 23:
+        torque_controller = _get_conf(conf_controller, 0, False)
+        anti_windup = _get_conf(conf_controller, 1, True)
+        auto_parachute_tilt_abort = True
+        input_type = _get_conf(conf_controller, 2, "Step [º]")
+        ctrl_setup_list = [torque_controller, anti_windup, input_type] + [_get_conf(conf_controller, i, 0.0) for i in range(3, 9)]
+        offset = 0
+    else:
+        torque_controller = _get_conf(conf_controller, 0, False)
+        anti_windup = _get_conf(conf_controller, 1, True)
+        auto_parachute_tilt_abort = _get_conf(conf_controller, 2, True)
+        input_type = _get_conf(conf_controller, 3, "Step [º]")
+        ctrl_setup_list = [torque_controller, anti_windup, input_type] + [_get_conf(conf_controller, i, 0.0) for i in range(4, 10)]
+        offset = 1
+
+    controller.setup_controller(ctrl_setup_list,
                                 Actuator_reduction,
                                 Actuator_max)
-    inp = _get_conf(conf_controller, 9, 0.0)
-    inp_time = _get_conf(conf_controller, 10, 0.0)
-    t_launch = _get_conf(conf_controller, 11, 0.0)
-    Ts = _get_conf(conf_controller, 12, 0.02)
-    T_Program = _get_conf(conf_controller, 13, 0.01)
-    sim_duration = _get_conf(conf_controller, 14, 30.0)
-    T = _get_conf(conf_controller, 15, 0.003)
-    export_T = _get_conf(conf_controller, 16, 0.1)
+    inp = _get_conf(conf_controller, 9 + offset, 0.0)
+    inp_time = _get_conf(conf_controller, 10 + offset, 0.0)
+    t_launch = _get_conf(conf_controller, 11 + offset, 0.0)
+    Ts = _get_conf(conf_controller, 12 + offset, 0.02)
+    T_Program = _get_conf(conf_controller, 13 + offset, 0.01)
+    sim_duration = _get_conf(conf_controller, 14 + offset, 30.0)
+    T = _get_conf(conf_controller, 15 + offset, 0.003)
+    export_T = _get_conf(conf_controller, 16 + offset, 0.1)
 
-    launch_altitude = _get_conf(conf_controller, 17, 0.0)
-    position_global[0] = _get_conf(conf_controller, 18, 0.0)
+    launch_altitude = _get_conf(conf_controller, 17 + offset, 0.0)
+    position_global[0] = _get_conf(conf_controller, 18 + offset, 0.0)
     x_d.f = position_global[0]
-    v_glob = [_get_conf(conf_controller, 19, 0.0), _get_conf(conf_controller, 20, 0.0)]
+    v_glob = [_get_conf(conf_controller, 19 + offset, 0.0), _get_conf(conf_controller, 20 + offset, 0.0)]
     x_d.f_d, z_d.f_d = v_glob[0], v_glob[1]
-    Q_d.f += _get_conf(conf_controller, 21, 0.0) * DEG2RAD
-    Q_d.f_d = _get_conf(conf_controller, 22, 0.0) * DEG2RAD
+    Q_d.f += _get_conf(conf_controller, 21 + offset, 0.0) * DEG2RAD
+    Q_d.f_d = _get_conf(conf_controller, 22 + offset, 0.0) * DEG2RAD
     Q = Q_d.f_d
     theta = Q_d.f
     [U_d.f, W_d.f] = glob2loc(position_global[0], 0, theta)
@@ -705,9 +721,9 @@ def update_parameters():
                 should_ignite = True
 
         if should_ignite:
-            global parachute_deployed, parachute_deploy_time
+            global parachute_deployed, parachute_deploy_time, auto_parachute_tilt_abort
             tilt_angle = abs(theta)
-            if not parachute_deployed and tilt_angle > Actuator_max:
+            if auto_parachute_tilt_abort and not parachute_deployed and tilt_angle > Actuator_max:
                 parachute_deployed = True
                 parachute_deploy_time = t
                 print(f"\n[SAFETY ABORT] Rocket tilt ({tilt_angle*RAD2DEG:.2f}°) exceeds TVC max capability ({Actuator_max*RAD2DEG:.2f}°)")
