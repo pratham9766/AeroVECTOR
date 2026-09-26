@@ -64,13 +64,23 @@ class SITLProgram:
         self.LANDED_ALTITUDE_BAND = 1.0
         self.LANDED_REQUIRED_READINGS = 20
 
-        # ----------------------------
-        # DHRUVA PID gains
-        # ----------------------------
-        self.pitch_kp = 0.05
-        self.pitch_ki = 0.04
-        self.pitch_kd = 0.01
-        self.derivative_filter = 0.90
+        # ============================================================
+        # DHRUVA PID GAINS — ASCENT (STAGE 1 / MOTOR 1 BURN)
+        # ============================================================
+        self.ascent_pitch_kp = 0.05
+        self.ascent_pitch_ki = 0.04
+        self.ascent_pitch_kd = 0.01
+        self.ascent_derivative_filter = 0.90
+
+        # ============================================================
+        # DHRUVA PID GAINS — DESCENT / SECOND BURN (STAGE 2 / MOTOR 2)
+        # ============================================================
+        # During descent/second burn, vehicle mass and inertia (Iy) are lower,
+        # dynamic pressure q is different, and motor 2 thrust curve applies.
+        self.descent_pitch_kp = 0.05
+        self.descent_pitch_ki = 0.04
+        self.descent_pitch_kd = 0.01
+        self.descent_derivative_filter = 0.90
 
         self.pitch_setpoint_deg = 0.0
 
@@ -146,8 +156,8 @@ class SITLProgram:
         self.deploy_parachute_on_descent = False
 
         print(
-            f"DHRUVA TEST CONFIG: Kp={self.pitch_kp}, "
-            f"Ki={self.pitch_ki}, Kd={self.pitch_kd}, "
+            f"DHRUVA TEST CONFIG: Ascent [Kp={self.ascent_pitch_kp}, Ki={self.ascent_pitch_ki}, Kd={self.ascent_pitch_kd}] | "
+            f"Descent [Kp={self.descent_pitch_kp}, Ki={self.descent_pitch_ki}, Kd={self.descent_pitch_kd}] | "
             f"Parachute={self.deploy_parachute_on_descent}"
         )
 
@@ -238,31 +248,31 @@ class SITLProgram:
         self.pitch_d = 0.0
         self.pitch_output = 0.0
 
-    def pid_update(self, setpoint, measured, dt):
+    def pid_update(self, setpoint, measured, dt, kp, ki, kd, derivative_filter):
 
         if dt <= 0:
             return self.pitch_output
 
         error = setpoint - measured
 
-        self.pitch_p = self.pitch_kp * error
+        self.pitch_p = kp * error
 
         raw_derivative = (
             error - self.previous_error
         ) / dt
 
         self.filtered_derivative = (
-            self.derivative_filter * self.filtered_derivative
-            + (1.0 - self.derivative_filter) * raw_derivative
+            derivative_filter * self.filtered_derivative
+            + (1.0 - derivative_filter) * raw_derivative
         )
 
-        self.pitch_d = self.pitch_kd * self.filtered_derivative
+        self.pitch_d = kd * self.filtered_derivative
 
         candidate_integral = (
             self.integral + error * dt
         )
 
-        candidate_i = self.pitch_ki * candidate_integral
+        candidate_i = ki * candidate_integral
 
         candidate_output = (
             self.pitch_p
@@ -283,7 +293,7 @@ class SITLProgram:
         if not saturating_high and not saturating_low:
             self.integral = candidate_integral
 
-        self.pitch_i = self.pitch_ki * self.integral
+        self.pitch_i = ki * self.integral
 
         raw_output = (
             self.pitch_p
@@ -349,6 +359,7 @@ class SITLProgram:
             if self.accx > 1.3 and altitude > 5.0:
                 self.flight_state = self.STATE_SECOND_BURN
                 self.landed_counter = 0
+                self.pid_reset()
             elif self.flight_state == self.STATE_APOGEE:
                 self.flight_state = self.STATE_DESCENT
             elif self.flight_state == self.STATE_DESCENT:
@@ -404,17 +415,29 @@ class SITLProgram:
 
     def update_tvc(self, dt):
 
-        # TVC is active during ASCENT and SECOND_BURN.
-        if self.flight_state not in (self.STATE_ASCENT, self.STATE_SECOND_BURN):
-
+        # Dispatch gains according to active flight stage
+        if self.flight_state == self.STATE_ASCENT:
+            kp = self.ascent_pitch_kp
+            ki = self.ascent_pitch_ki
+            kd = self.ascent_pitch_kd
+            filter_val = self.ascent_derivative_filter
+        elif self.flight_state == self.STATE_SECOND_BURN:
+            kp = self.descent_pitch_kp
+            ki = self.descent_pitch_ki
+            kd = self.descent_pitch_kd
+            filter_val = self.descent_derivative_filter
+        else:
             self.pid_reset()
-
             return 0.0
 
         pitch_output = self.pid_update(
             self.pitch_setpoint_deg,
             self.pitch_deg,
-            dt
+            dt,
+            kp,
+            ki,
+            kd,
+            filter_val
         )
 
         return float(
