@@ -615,6 +615,8 @@ class TabWithCanvas(Tab):
         self.flight_time = 0.01
         self.prev_total_errors = 0
         self.point_diameter = 6
+        self.xcg_point_canvas = None
+        self.cp_point_canvas = None
 
     def _sort(self, l):
         """
@@ -954,7 +956,10 @@ class TabWithCanvas(Tab):
         self._update_labels()
 
     def _draw_points(self):
-        self.canvas.delete(self.xcg_point_canvas, self.cp_point_canvas)
+        if hasattr(self, 'xcg_point_canvas') and self.xcg_point_canvas is not None:
+            self.canvas.delete(self.xcg_point_canvas)
+        if hasattr(self, 'cp_point_canvas') and self.cp_point_canvas is not None:
+            self.canvas.delete(self.cp_point_canvas)
         self._update_scale_limits()
         self._create_point_cp()
         self._create_point_xcg()

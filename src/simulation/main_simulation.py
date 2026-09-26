@@ -284,60 +284,129 @@ def get_data_savefile():
 
 def update_all_parameters(parameters,conf_3d,conf_controller,conf_sitl, rocket_dim):
     global thrust, burnout_time, thrust_curve, max_thrust, average_thrust
-    global m, m_liftoff, m_burnout, Iy, Iy_liftoff, Iy_burnout, d, xcg
-    global xcg_liftoff, xcg_burnout, xt
+    global m, m_liftoff, m_burnout, m_burnout2, Iy, Iy_liftoff, Iy_burnout, Iy_burnout2, d, xcg
+    global xcg_liftoff, xcg_burnout, xcg_burnout2, xt
+    global motor2_name, motor2_trigger_mode, motor2_trigger_value
     global k1, k2, k3, Actuator_max, Actuator_reduction
     global u_initial_offset, motor_offset
     global wind, wind_distribution, launchrod_lenght, theta, wind_total, launchrod_angle
 
-    m_liftoff = parameters[1]
-    m_burnout = parameters[2]
-    Iy_burnout = parameters[3]
-    Iy_liftoff = parameters[4]
-    xcg_liftoff = parameters[5]
-    xcg_burnout = parameters[6]
-    xt = parameters[7]
-    servo_resolution = parameters[8]
-    Actuator_max = parameters[9] * DEG2RAD
-    Actuator_reduction = parameters[10]
-    u_initial_offset = parameters[11] * DEG2RAD
-    Actuator_weight_compensation = parameters[12]
-    wind = parameters[13]
-    wind_distribution = parameters[14]
-    launchrod_lenght = parameters[15]
-    launchrod_angle = parameters[16] * DEG2RAD
+    def _get_param(idx, default):
+        if idx < len(parameters) and parameters[idx] not in ("", None):
+            try:
+                if isinstance(default, float):
+                    return float(parameters[idx])
+                elif isinstance(default, int):
+                    return int(parameters[idx])
+                return str(parameters[idx])
+            except (ValueError, TypeError):
+                return default
+        return default
+
+    if len(parameters) == 21:
+        motor2_name = "None"
+        motor2_trigger_mode = "Disabled"
+        motor2_trigger_value = 0.0
+        m_liftoff = _get_param(1, 0.451)
+        m_burnout = _get_param(2, 0.351)
+        m_burnout2 = m_burnout
+        Iy_burnout = _get_param(3, 0.0601)
+        Iy_liftoff = _get_param(4, 0.0662)
+        Iy_burnout2 = Iy_burnout
+        xcg_liftoff = _get_param(5, 0.55)
+        xcg_burnout = _get_param(6, 0.51)
+        xcg_burnout2 = xcg_burnout
+        xt = _get_param(7, 0.85)
+        servo_resolution = _get_param(8, 1.0)
+        Actuator_max = _get_param(9, 10.0) * DEG2RAD
+        Actuator_reduction = _get_param(10, 5.0)
+        u_initial_offset = _get_param(11, 2.0) * DEG2RAD
+        Actuator_weight_compensation = _get_param(12, 2.1)
+        wind = _get_param(13, 2.0)
+        wind_distribution = _get_param(14, 0.1)
+        launchrod_lenght = _get_param(15, 0.0)
+        launchrod_angle = _get_param(16, 0.0) * DEG2RAD
+        motor_offset = _get_param(17, 0.0) * DEG2RAD
+        roughness = [_get_param(18, 60.0)*1e-6 + 1e-9, _get_param(19, 60.0)*1e-6 + 1e-9, _get_param(20, 60.0)*1e-6 + 1e-9]
+    else:
+        motor2_name = _get_param(1, "None")
+        motor2_trigger_mode = _get_param(2, "Disabled")
+        motor2_trigger_value = _get_param(3, 0.0)
+        m_liftoff = _get_param(4, 0.451)
+        m_burnout = _get_param(5, 0.351)
+        m_burnout2 = _get_param(6, 0.301)
+        Iy_liftoff = _get_param(7, 0.0662)
+        Iy_burnout = _get_param(8, 0.0601)
+        Iy_burnout2 = _get_param(9, 0.0550)
+        xcg_liftoff = _get_param(10, 0.55)
+        xcg_burnout = _get_param(11, 0.51)
+        xcg_burnout2 = _get_param(12, 0.48)
+        xt = _get_param(13, 0.85)
+        servo_resolution = _get_param(14, 1.0)
+        Actuator_max = _get_param(15, 10.0) * DEG2RAD
+        Actuator_reduction = _get_param(16, 5.0)
+        u_initial_offset = _get_param(17, 2.0) * DEG2RAD
+        Actuator_weight_compensation = _get_param(18, 2.1)
+        wind = _get_param(19, 2.0)
+        wind_distribution = _get_param(20, 0.1)
+        launchrod_lenght = _get_param(21, 0.0)
+        launchrod_angle = _get_param(22, 0.0) * DEG2RAD
+        motor_offset = _get_param(23, 0.0) * DEG2RAD
+        roughness = [_get_param(24, 60.0)*1e-6 + 1e-9, _get_param(25, 60.0)*1e-6 + 1e-9, _get_param(26, 60.0)*1e-6 + 1e-9]
+
     Q_d.f = launchrod_angle
-    motor_offset = parameters[17] * DEG2RAD
     theta = Q_d.f
     wind_total = wind
     m = m_liftoff
     Iy = Iy_liftoff
     xcg = xcg_liftoff
-    rocket_mass_parameters = [m_liftoff, m_burnout, Iy_burnout, Iy_liftoff,
+    rocket_mass_parameters = [m_liftoff, m_burnout, Iy_liftoff, Iy_burnout,
                               xcg_liftoff, xcg_burnout]
-    roughness = [0, 0, 0]  # Rocket, stabilization fin, control fin.
-    roughness[0] = parameters[18]*1e-6 + 1e-9
-    roughness[1] = parameters[19]*1e-6 + 1e-9
-    roughness[2] = parameters[20]*1e-6 + 1e-9
+
+    def _get_conf(arr, idx, default):
+        if idx < len(arr) and arr[idx] not in ("", None):
+            try:
+                if isinstance(default, bool):
+                    if str(arr[idx]) in ("True", "true", "1"):
+                        return True
+                    elif str(arr[idx]) in ("False", "false", "0"):
+                        return False
+                    return bool(arr[idx])
+                elif isinstance(default, float):
+                    return float(arr[idx])
+                elif isinstance(default, int):
+                    return int(arr[idx])
+                return arr[idx]
+            except (ValueError, TypeError):
+                return default
+        return default
 
     ##
     global toggle_3d, camera_shake_toggle, slow_mo, force_scale, hide_forces
     global hide_cg, camera_type, variable_fov, fov
-    toggle_3d = conf_3d[0]
-    camera_shake_toggle = conf_3d[1]
-    hide_forces = conf_3d[2]
-    variable_fov = conf_3d[3]
-    hide_cg = conf_3d[4]
-    camera_type = conf_3d[5]
-    slow_mo = conf_3d[6]
-    force_scale = conf_3d[7]
-    fov = conf_3d[8]
+    toggle_3d = _get_conf(conf_3d, 0, False)
+    camera_shake_toggle = _get_conf(conf_3d, 1, False)
+    hide_forces = _get_conf(conf_3d, 2, False)
+    variable_fov = _get_conf(conf_3d, 3, False)
+    hide_cg = _get_conf(conf_3d, 4, True)
+    camera_type = _get_conf(conf_3d, 5, "Fixed")
+    slow_mo = _get_conf(conf_3d, 6, 3.0)
+    force_scale = _get_conf(conf_3d, 7, 0.2)
+    fov = _get_conf(conf_3d, 8, 0.75)
 
     # rocket Class
     global S, d
-    gui.savefile.read_motor_data(gui.param_file_tab.combobox[0].get())
+    if len(gui.param_file_tab.combobox) > 0:
+        gui.savefile.read_motor_data(gui.param_file_tab.combobox[0].get())
     rocket.set_motor(gui.savefile.get_motor_data())
     burnout_time = rocket.burnout_time()
+
+    if len(gui.param_file_tab.combobox) > 1:
+        gui.savefile.read_motor2_data(gui.param_file_tab.combobox[1].get())
+        rocket.set_motor2(gui.savefile.get_motor2_data(), m_burnout2, Iy_burnout2, xcg_burnout2)
+    else:
+        rocket.set_motor2([[], []], m_burnout, Iy_burnout, xcg_burnout)
+
     rocket.update_rocket(gui.draw_rocket_tab.get_configuration_destringed(),
                          rocket_mass_parameters, roughness)
     S = rocket.area_ref
@@ -351,25 +420,26 @@ def update_all_parameters(parameters,conf_3d,conf_controller,conf_sitl, rocket_d
     global average_T, launch_altitude
     global position_global, position_local, v_glob, Q
     global export_T
-    input_type = conf_controller[2]
-    controller.setup_controller(conf_controller[0:9],
+    input_type = _get_conf(conf_controller, 2, "Step [º]")
+    controller.setup_controller([_get_conf(conf_controller, i, 0.0) for i in range(9)],
                                 Actuator_reduction,
                                 Actuator_max)
-    inp = conf_controller[9]
-    inp_time = conf_controller[10]
-    t_launch = conf_controller[11]
-    Ts = conf_controller[12]
-    T_Program = conf_controller[13]
-    sim_duration = conf_controller[14]
-    T = conf_controller[15]
-    export_T = conf_controller[16]
-    launch_altitude = conf_controller[17]
-    position_global[0] = conf_controller[18]
+    inp = _get_conf(conf_controller, 9, 0.0)
+    inp_time = _get_conf(conf_controller, 10, 0.0)
+    t_launch = _get_conf(conf_controller, 11, 0.0)
+    Ts = _get_conf(conf_controller, 12, 0.02)
+    T_Program = _get_conf(conf_controller, 13, 0.01)
+    sim_duration = _get_conf(conf_controller, 14, 30.0)
+    T = _get_conf(conf_controller, 15, 0.003)
+    export_T = _get_conf(conf_controller, 16, 0.1)
+
+    launch_altitude = _get_conf(conf_controller, 17, 0.0)
+    position_global[0] = _get_conf(conf_controller, 18, 0.0)
     x_d.f = position_global[0]
-    v_glob = [conf_controller[19], conf_controller[20]]
+    v_glob = [_get_conf(conf_controller, 19, 0.0), _get_conf(conf_controller, 20, 0.0)]
     x_d.f_d, z_d.f_d = v_glob[0], v_glob[1]
-    Q_d.f += conf_controller[21] * DEG2RAD
-    Q_d.f_d = conf_controller[22] * DEG2RAD
+    Q_d.f += _get_conf(conf_controller, 21, 0.0) * DEG2RAD
+    Q_d.f_d = _get_conf(conf_controller, 22, 0.0) * DEG2RAD
     Q = Q_d.f_d
     theta = Q_d.f
     [U_d.f, W_d.f] = glob2loc(position_global[0], 0, theta)
@@ -379,22 +449,21 @@ def update_all_parameters(parameters,conf_3d,conf_controller,conf_sitl, rocket_d
     global Activate_SITL, use_noise, enable_python_sitl, module, port, baudrate
     global gyro_sd, acc_sd, alt_sd, gnss_pos_sd, gnss_vel_sd, gyro_st, acc_st
     global alt_st, gnss_st
-    Activate_SITL = conf_sitl[0]
-    use_noise = conf_sitl[1]
-    enable_python_sitl = conf_sitl[2]
-    module = conf_sitl[3] + ".py"
-    # !!!
-    port = conf_sitl[4]
-    baudrate = conf_sitl[5]
-    gyro_sd = conf_sitl[6]
-    acc_sd = conf_sitl[7]
-    alt_sd = conf_sitl[8]
-    gnss_pos_sd = conf_sitl[9]
-    gnss_vel_sd = conf_sitl[10]
-    gyro_st = conf_sitl[11]
-    acc_st = conf_sitl[12]
-    alt_st = conf_sitl[13]
-    gnss_st = conf_sitl[14]
+    Activate_SITL = _get_conf(conf_sitl, 0, False)
+    use_noise = _get_conf(conf_sitl, 1, False)
+    enable_python_sitl = _get_conf(conf_sitl, 2, False)
+    module = str(_get_conf(conf_sitl, 3, "")) + ".py"
+    port = str(_get_conf(conf_sitl, 4, "COM3"))
+    baudrate = _get_conf(conf_sitl, 5, 115200)
+    gyro_sd = _get_conf(conf_sitl, 6, 0.0)
+    acc_sd = _get_conf(conf_sitl, 7, 0.0)
+    alt_sd = _get_conf(conf_sitl, 8, 0.0)
+    gnss_pos_sd = _get_conf(conf_sitl, 9, 0.0)
+    gnss_vel_sd = _get_conf(conf_sitl, 10, 0.0)
+    gyro_st = _get_conf(conf_sitl, 11, 0.0025)
+    acc_st = _get_conf(conf_sitl, 12, 0.0025)
+    alt_st = _get_conf(conf_sitl, 13, 0.005)
+    gnss_st = _get_conf(conf_sitl, 14, 1.0)
 
     global send_gyro, send_alt, send_gnss_vel
     send_gyro = Q
@@ -533,6 +602,12 @@ def reset_variables():
     send_alt = 0
     send_gnss_pos = 0
     send_gnss_vel = 0
+    global motor2_ignited, apogee_detected, apogee_altitude, apogee_time, v_glob_prev
+    motor2_ignited = False
+    apogee_detected = False
+    apogee_altitude = 0.0
+    apogee_time = 0.0
+    v_glob_prev = [0.0, 0.0]
     rocket.reset_variables()
 
 
@@ -591,6 +666,39 @@ def update_parameters():
     # Computes the total airspeed in local coordinates
     v_loc_tot = [v_loc[0]-wind_loc[0], v_loc[1]-wind_loc[1]]
     aoa = calculate_aoa(v_loc_tot)
+
+    # Apogee & Motor 2 Trigger Engine
+    global motor2_name, motor2_trigger_mode, motor2_trigger_value
+    global motor2_ignited, apogee_detected, apogee_altitude, apogee_time, v_glob_prev
+
+    if not apogee_detected and v_glob[0] < 0 and v_glob_prev[0] >= 0 and t > t_launch + 0.5:
+        apogee_detected = True
+        apogee_altitude = position_global[0]
+        apogee_time = t
+        print(f"Apogee detected at {apogee_altitude:.2f} m, t={t:.2f}s")
+
+    if not motor2_ignited and len(rocket.motor2[0]) > 0 and motor2_trigger_mode not in ("Disabled", "None", ""):
+        should_ignite = False
+        if motor2_trigger_mode == "Distance After Apogee [m]" and apogee_detected:
+            drop = apogee_altitude - position_global[0]
+            if drop >= motor2_trigger_value:
+                should_ignite = True
+        elif motor2_trigger_mode == "Altitude Threshold [m]":
+            if position_global[0] >= motor2_trigger_value:
+                should_ignite = True
+        elif motor2_trigger_mode == "Time After Burnout 1 [s]":
+            if t >= t_launch + rocket.t_burnout + motor2_trigger_value:
+                should_ignite = True
+        elif motor2_trigger_mode == "Time After Launch [s]":
+            if t >= t_launch + motor2_trigger_value:
+                should_ignite = True
+
+        if should_ignite:
+            if rocket.activate_motor2(t):
+                motor2_ignited = True
+
+    v_glob_prev = [v_glob[0], v_glob[1]]
+
     thrust = rocket.get_thrust(t, t_launch)
     m, Iy, xcg = rocket.get_mass_parameters(t, t_launch)
     S = rocket.area_ref
@@ -959,7 +1067,12 @@ def plot_plots():
     plt.xlabel('Time', fontsize=16)
     plt.ylabel('', fontsize=16)
     plt.legend(shadow=True, fontsize='small')
-    plt.axvline(x=burnout_time+t_launch, color="black", linewidth=1)
+    plt.axvline(x=burnout_time+t_launch, color="black", linewidth=1, linestyle="--", label="Motor 1 Burnout")
+    if apogee_detected:
+        plt.axvline(x=apogee_time, color="purple", linewidth=1, linestyle=":", label="Apogee")
+    if rocket.motor2_active and rocket.t_launch2 is not None:
+        plt.axvline(x=rocket.t_launch2, color="green", linewidth=1, linestyle="--", label="Motor 2 Ignition")
+        plt.axvline(x=rocket.t_launch2 + rocket.t_burnout2, color="blue", linewidth=1, linestyle="--", label="Motor 2 Burnout")
 
     # Second Plot
     if s[5] != "Off" or s[6] != "Off" or s[7] != "Off" or s[8] != "Off" or s[9] != "Off":
@@ -989,7 +1102,12 @@ def plot_plots():
         plt.xlabel('Time', fontsize=16)
         plt.ylabel('', fontsize=16)
         plt.legend(shadow=True, fontsize='small')
-        plt.axvline(x=burnout_time+t_launch, color="black", linewidth=1)
+        plt.axvline(x=burnout_time+t_launch, color="black", linewidth=1, linestyle="--", label="Motor 1 Burnout")
+        if apogee_detected:
+            plt.axvline(x=apogee_time, color="purple", linewidth=1, linestyle=":", label="Apogee")
+        if rocket.motor2_active and rocket.t_launch2 is not None:
+            plt.axvline(x=rocket.t_launch2, color="green", linewidth=1, linestyle="--", label="Motor 2 Ignition")
+            plt.axvline(x=rocket.t_launch2 + rocket.t_burnout2, color="blue", linewidth=1, linestyle="--", label="Motor 2 Burnout")
 
 def export_plots(file_name):
     names = gui.run_sim_tab.get_configuration_destringed()
@@ -2058,7 +2176,15 @@ def run_3d():
                               origin=vect_cg)
 
             # Motor Burnout, stops the red trail of the rocket
-            if t_3d[i] > burnout_time + t_launch or t_3d[i] < t_launch:
+            is_motor_burning = False
+            if t_launch <= t_3d[i] <= burnout_time + t_launch:
+                is_motor_burning = True
+            elif rocket.motor2_active and rocket.t_launch2 is not None and rocket.t_launch2 <= t_3d[i] <= rocket.t_launch2 + rocket.t_burnout2:
+                is_motor_burning = True
+            elif thrust_3d[i] > 0.05:
+                is_motor_burning = True
+
+            if not is_motor_burning:
                 motor.visible = False
                 motor.make_trail = False
             else:

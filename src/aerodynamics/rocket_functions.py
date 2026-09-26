@@ -58,8 +58,20 @@ class Rocket:
     def __init__(self):
         self.xcg = 1
         self.ogive_flag = False
+        self.use_fins = False
+        self.fins_attached = True
+        self.use_fins_control = False
+        self.is_in_the_pad_flag = True
+        self.is_supersonic = False
         self.motor = [[], []]
         self.t_burnout = 1
+        self.motor2 = [[], []]
+        self.t_burnout2 = 0
+        self.motor2_active = False
+        self.t_launch2 = None
+        self.m_burnout2 = None
+        self.Iy_burnout2 = None
+        self.xcg_burnout2 = None
         self.reynolds = 1
         # Empirical method to calculate the ca from the cd, it should use a
         # fitted third order polinomial but interpolations are easier
@@ -142,6 +154,8 @@ class Rocket:
         self.use_fins_control = False
         self.is_in_the_pad_flag = True
         self.is_supersonic = False
+        self.motor2_active = False
+        self.t_launch2 = None
 
     def _set_variables(self, l):
         self.ogive_flag = l[0]
@@ -737,7 +751,7 @@ class Rocket:
     # MOTOR - MOTOR - MOTOR - MOTOR - MOTOR - MOTOR - MOTOR - MOTOR - MOTOR
     def set_motor(self, data):
         """
-        Set the rocket motor with the corresponding data.
+        Set the primary rocket motor with the corresponding data.
 
         Parameters
         ----------
@@ -748,31 +762,59 @@ class Rocket:
         -------
         None.
         """
-        # Motor data from text files
-        # t, thrust
-        self.motor[0] = copy.deepcopy(data[0])
-        self.motor[1] = copy.deepcopy(data[1])
-        self.t_burnout = self.burnout_time()
+        if data and len(data) == 2 and len(data[0]) > 0:
+            self.motor[0] = copy.deepcopy(data[0])
+            self.motor[1] = copy.deepcopy(data[1])
+            self.t_burnout = self.burnout_time()
+        else:
+            self.motor = [[0], [0]]
+            self.t_burnout = 0.001
+
+    def set_motor2(self, data, m_burnout2=None, Iy_burnout2=None, xcg_burnout2=None):
+        """
+        Set the secondary rocket motor with corresponding data and final mass parameters.
+        """
+        if data and len(data) == 2 and len(data[0]) > 0:
+            self.motor2[0] = copy.deepcopy(data[0])
+            self.motor2[1] = copy.deepcopy(data[1])
+            self.t_burnout2 = float(self.motor2[0][-1])
+        else:
+            self.motor2 = [[], []]
+            self.t_burnout2 = 0.0
+        self.motor2_active = False
+        self.t_launch2 = None
+        self.m_burnout2 = m_burnout2 if m_burnout2 is not None else self.m_burnout
+        self.Iy_burnout2 = Iy_burnout2 if Iy_burnout2 is not None else self.Iy_burnout
+        self.xcg_burnout2 = xcg_burnout2 if xcg_burnout2 is not None else self.xcg_burnout
+
+    def activate_motor2(self, t_now):
+        """
+        Ignites motor 2 at simulation time t_now.
+        """
+        if not self.motor2_active and len(self.motor2[0]) > 0:
+            self.motor2_active = True
+            self.t_launch2 = t_now
+            print(f"Motor 2 ignited at t={t_now:.3f}s")
+            return True
+        return False
 
     def get_thrust(self, t, t_launch):
         """
-        Input the current time and the time at which the motor ignited
-        to get its current thrust.
-
-        Parameters
-        ----------
-        t : float
-            current time.
-        t_launch : float
-            ignition time.
-
-        Returns
-        -------
-        thrust : float
-            thrust.
+        Input current time and ignition time to get net instantaneous thrust.
         """
-        x = t - t_launch
-        self.thrust = np.interp(x, self.motor[0], self.motor[1])
+        thrust1 = 0.0
+        if len(self.motor[0]) > 0:
+            x1 = t - t_launch
+            if 0 <= x1 <= self.t_burnout:
+                thrust1 = float(np.interp(x1, self.motor[0], self.motor[1]))
+
+        thrust2 = 0.0
+        if self.motor2_active and self.t_launch2 is not None and len(self.motor2[0]) > 0:
+            x2 = t - self.t_launch2
+            if 0 <= x2 <= self.t_burnout2:
+                thrust2 = float(np.interp(x2, self.motor2[0], self.motor2[1]))
+
+        self.thrust = thrust1 + thrust2
         if self.thrust < 0.001:
             self.thrust = 0.001
         return float(self.thrust)
@@ -780,16 +822,6 @@ class Rocket:
     def is_in_the_pad(self, alt):
         """
         Check if the rocket is in the pad.
-
-        Parameters
-        ----------
-        alt : float
-            Current altitude.
-
-        Returns
-        -------
-        is_in_the_pad_flag : bool
-            Is the rocket in the pad?.
         """
         if alt > 0.001 and self.is_in_the_pad_flag is True:
             self.is_in_the_pad_flag = False
@@ -797,50 +829,77 @@ class Rocket:
 
     def burnout_time(self):
         """
-        Burn time of the motor.
-
-        Returns
-        -------
-        float
-            Burn time.
+        Burn time of the primary motor.
         """
-        return self.motor[0][-1]
+        if len(self.motor[0]) > 0:
+            return float(self.motor[0][-1])
+        return 0.0
+
+    def burnout_time_total(self, t_launch):
+        """
+        Returns the absolute simulation timestamp when all motor burning ends.
+        """
+        t1_end = t_launch + self.t_burnout
+        if self.motor2_active and self.t_launch2 is not None:
+            t2_end = self.t_launch2 + self.t_burnout2
+            return max(t1_end, t2_end)
+        return t1_end
 
     def get_mass(self, t, t_launch):
-        x = t - t_launch
-        yp = [self.m_liftoff, self.m_burnout]
-        xp = [0, self.t_burnout]
-        self.m = np.interp(x, xp, yp)
-        return float(self.m)
+        x1 = t - t_launch
+        if x1 <= 0:
+            m = self.m_liftoff
+        elif x1 < self.t_burnout:
+            m = float(np.interp(x1, [0, self.t_burnout], [self.m_liftoff, self.m_burnout]))
+        else:
+            m = self.m_burnout
+
+        if self.motor2_active and self.t_launch2 is not None and self.m_burnout2 is not None and self.t_burnout2 > 0:
+            x2 = t - self.t_launch2
+            if x2 > 0:
+                if x2 < self.t_burnout2:
+                    m = float(np.interp(x2, [0, self.t_burnout2], [self.m_burnout, self.m_burnout2]))
+                else:
+                    m = self.m_burnout2
+        self.m = float(m)
+        return self.m
 
     def get_Iy(self, t, t_launch):
-        x = t - t_launch
-        yp = [self.Iy_liftoff, self.Iy_burnout]
-        xp = [0, self.t_burnout]
-        self.Iy = np.interp(x, xp, yp)
-        return float(self.Iy)
+        x1 = t - t_launch
+        if x1 <= 0:
+            Iy = self.Iy_liftoff
+        elif x1 < self.t_burnout:
+            Iy = float(np.interp(x1, [0, self.t_burnout], [self.Iy_liftoff, self.Iy_burnout]))
+        else:
+            Iy = self.Iy_burnout
+
+        if self.motor2_active and self.t_launch2 is not None and self.Iy_burnout2 is not None and self.t_burnout2 > 0:
+            x2 = t - self.t_launch2
+            if x2 > 0:
+                if x2 < self.t_burnout2:
+                    Iy = float(np.interp(x2, [0, self.t_burnout2], [self.Iy_burnout, self.Iy_burnout2]))
+                else:
+                    Iy = self.Iy_burnout2
+        self.Iy = float(Iy)
+        return self.Iy
 
     def get_xcg(self, t, t_launch):
-        """
-        Input the current time and the time at which the motor ignited
-        to get its current xcg.
+        x1 = t - t_launch
+        if x1 <= 0:
+            xcg = self.xcg_liftoff
+        elif x1 < self.t_burnout:
+            xcg = float(np.interp(x1, [0, self.t_burnout], [self.xcg_liftoff, self.xcg_burnout]))
+        else:
+            xcg = self.xcg_burnout
 
-        Parameters
-        ----------
-        t : float
-            current time.
-        t_launch : float
-            ignition time.
-
-        Returns
-        -------
-        thrust : float
-            xcg.
-        """
-        x = t - t_launch
-        yp = [self.xcg_liftoff, self.xcg_burnout]
-        xp = [0, self.t_burnout]
-        self.xcg = np.interp(x, xp, yp)
+        if self.motor2_active and self.t_launch2 is not None and self.xcg_burnout2 is not None and self.t_burnout2 > 0:
+            x2 = t - self.t_launch2
+            if x2 > 0:
+                if x2 < self.t_burnout2:
+                    xcg = float(np.interp(x2, [0, self.t_burnout2], [self.xcg_burnout, self.xcg_burnout2]))
+                else:
+                    xcg = self.xcg_burnout2
+        self.xcg = float(xcg)
         return self.xcg
 
     def get_mass_parameters(self, t, t_launch):

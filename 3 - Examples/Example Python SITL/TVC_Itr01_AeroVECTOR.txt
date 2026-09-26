@@ -1,10 +1,16 @@
-Motor = GATI_E30.csv
+Motor = tvc_motor.csv
+Motor 2 = tvc_motor_upr_wala.csv
+Motor 2 Trigger Mode = Distance After Apogee [m]
+Motor 2 Trigger Value = 1
 Mass Liftoff = 0.837
 Mass Burnout = 0.807
+Mass Burnout 2 = 0.807
 Iy Liftoff = 0.110
 Iy Burnout = 0.110
+Iy Burnout 2 = 0.110
 Xcg Liftoff = 0.368
 Xcg Burnout = 0.356
+Xcg Burnout 2 = 0.356
 Xt = 0.65
 Servo Resolution = 1
 Max Actuator Angle = 12

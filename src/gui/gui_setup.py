@@ -151,6 +151,8 @@ def create_file_tab(notebook):
         run_sim_tab.depopulate()
         run_sim_tab.populate(savefile.get_conf_plots())
         savefile.read_motor_data(param_file_tab.combobox[0].get())
+        if len(param_file_tab.combobox) > 1:
+            savefile.read_motor2_data(param_file_tab.combobox[1].get())
         fun.Tab.update_active_file_label(savefile.name)
 
 
@@ -198,15 +200,21 @@ def create_parameters_tab(notebook):
     param_file_tab.create_tab(notebook, "Parameters")
     tk.Label(param_file_tab.tab, text="Parameters", fg="black", bg="#CCFFCC",
              padx=0).grid(row=0, column=0, sticky="NESW", columnspan=3)
-    combobox_options = [files.get_motor_names()]
-    names_combobox = ["Motor = "]
+    combobox_options = [files.get_motor_names(),
+                        files.get_motor2_names(),
+                        ["Disabled", "Distance After Apogee [m]", "Altitude Threshold [m]", "Time After Burnout 1 [s]", "Time After Launch [s]"]]
+    names_combobox = ["Motor = ", "Motor 2 = ", "Motor 2 Trigger Mode = "]
     param_file_tab.create_combobox(combobox_options, names_combobox, 1, 1)
-    names_entry = ["Mass Liftoff [kg] = ",
+    names_entry = ["Motor 2 Trigger Value = ",
+                   "Mass Liftoff [kg] = ",
                    "Mass Burnout [kg] = ",
+                   "Mass Burnout 2 [kg] = ",
                    "Iy Liftoff [kg*m^2] = ",
                    "Iy Burnout [kg*m^2] = ",
+                   "Iy Burnout 2 [kg*m^2] = ",
                    "Xcg Liftoff [m] = ",
                    "Xcg Burnout [m] = ",
+                   "Xcg Burnout 2 [m] = ",
                    "Xt [m] = ",
                    "Servo Resolution [º] = ",
                    "Max Actuator Angle [º] = ",
@@ -221,13 +229,15 @@ def create_parameters_tab(notebook):
                    "Rocket Roughness [μm] = ",
                    "Stabilization Fin Roughness [μm] = ",
                    "Control Fin Roughness [μm] = "]
-    param_file_tab.create_entry(names_entry, 2, 1, "W")
+    param_file_tab.create_entry(names_entry, 4, 1, "W")
 
     def button_save_parameters():
         d = param_file_tab.get_configuration()
         savefile.set_parameters(d)
         savefile.save_all_configurations(saved_thing="Parameters")
         savefile.read_motor_data(param_file_tab.combobox[0].get())
+        if len(param_file_tab.combobox) > 1:
+            savefile.read_motor2_data(param_file_tab.combobox[1].get())
 
     save_file_button = tk.Button(param_file_tab.tab, text="Save",
                                  command=button_save_parameters, width=20)

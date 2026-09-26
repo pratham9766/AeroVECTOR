@@ -67,12 +67,10 @@ class SITLProgram:
         # ----------------------------
         # DHRUVA PID gains
         # ----------------------------
-        self.pitch_kp = 1.5
-        # self.pitch_kp = 0.0
+        self.pitch_kp = 2.0
         self.pitch_ki = 2.4
-        # self.pitch_ki = 0.0
-        self.pitch_kd = 5.2
-        # self.pitch_kd = 0.0
+        # self.pitch_kd = 5.2
+        self.pitch_kd = 0.0
         self.derivative_filter = 0.90
 
         self.pitch_setpoint_deg = 0.0
@@ -81,14 +79,13 @@ class SITLProgram:
         self.output_max = 12.0
 
         # ----------------------------
-        # State
-        # ----------------------------
         self.STATE_BOOT = 0
         self.STATE_ON_PAD = 1
         self.STATE_ASCENT = 2
         self.STATE_APOGEE = 3
         self.STATE_DESCENT = 4
         self.STATE_LANDED = 5
+        self.STATE_SECOND_BURN = 6
 
         self.flight_state = self.STATE_BOOT
 
@@ -349,28 +346,30 @@ class SITLProgram:
                 self.landing_reference_altitude = altitude
                 self.landed_counter = 0
 
-        elif self.flight_state == self.STATE_APOGEE:
-
-            self.flight_state = self.STATE_DESCENT
-
-        elif self.flight_state == self.STATE_DESCENT:
-
-            if abs(
-                altitude - self.landing_reference_altitude
-            ) < self.LANDED_ALTITUDE_BAND:
-
-                self.landed_counter += 1
-
-            else:
-
+        elif self.flight_state in (self.STATE_APOGEE, self.STATE_DESCENT):
+            if self.accx > 1.3 and altitude > 5.0:
+                self.flight_state = self.STATE_SECOND_BURN
                 self.landed_counter = 0
+            elif self.flight_state == self.STATE_APOGEE:
+                self.flight_state = self.STATE_DESCENT
+            elif self.flight_state == self.STATE_DESCENT:
+                if abs(
+                    altitude - self.landing_reference_altitude
+                ) < self.LANDED_ALTITUDE_BAND:
+                    self.landed_counter += 1
+                else:
+                    self.landed_counter = 0
+                    self.landing_reference_altitude = altitude
+
+                if self.landed_counter >= self.LANDED_REQUIRED_READINGS:
+                    self.flight_state = self.STATE_LANDED
+                    self.pid_reset()
+
+        elif self.flight_state == self.STATE_SECOND_BURN:
+            if self.accx < 0.9 and altitude < self.previous_altitude:
+                self.flight_state = self.STATE_DESCENT
                 self.landing_reference_altitude = altitude
-
-            if self.landed_counter >= self.LANDED_REQUIRED_READINGS:
-
-                self.flight_state = self.STATE_LANDED
-
-                self.pid_reset()
+                self.landed_counter = 0
 
         elif self.flight_state == self.STATE_LANDED:
 
@@ -395,6 +394,7 @@ class SITLProgram:
             self.STATE_APOGEE: "APOGEE",
             self.STATE_DESCENT: "DESCENT",
             self.STATE_LANDED: "LANDED",
+            self.STATE_SECOND_BURN: "SECOND_BURN",
         }
 
         return names[state]
@@ -405,9 +405,8 @@ class SITLProgram:
 
     def update_tvc(self, dt):
 
-        # Original DHRUVA behavior:
-        # TVC is active only during ASCENT.
-        if self.flight_state != self.STATE_ASCENT:
+        # TVC is active during ASCENT and SECOND_BURN.
+        if self.flight_state not in (self.STATE_ASCENT, self.STATE_SECOND_BURN):
 
             self.pid_reset()
 

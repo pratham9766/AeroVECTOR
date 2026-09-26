@@ -65,6 +65,13 @@ def get_motor_names():
     return natural_sort(os.listdir(motors_path))
 
 
+def get_motor2_names():
+    r"""
+    Return a list with the names of the motor files in the folder /Motors, prefixed with None.
+    """
+    return ["None"] + natural_sort(os.listdir(motors_path))
+
+
 def get_sitl_modules_names(filepath):
     r"""
     Return a list with the names of the motor files in the folder /\Motors.
@@ -174,12 +181,18 @@ class SaveFile:
 
     def __init__(self):
         self.parameter_names = ["Motor = ",
+                                "Motor 2 = ",
+                                "Motor 2 Trigger Mode = ",
+                                "Motor 2 Trigger Value = ",
                                 "Mass Liftoff = ",
                                 "Mass Burnout = ",
+                                "Mass Burnout 2 = ",
                                 "Iy Liftoff = ",
                                 "Iy Burnout = ",
+                                "Iy Burnout 2 = ",
                                 "Xcg Liftoff = ",
                                 "Xcg Burnout = ",
+                                "Xcg Burnout 2 = ",
                                 "Xt = ",
                                 "Servo Resolution = ",
                                 "Max Actuator Angle = ",
@@ -267,6 +280,8 @@ class SaveFile:
         self.tofile = ""
         self.t_mot = []
         self.thrust_mot = []
+        self.t_mot2 = []
+        self.thrust_mot2 = []
         self.overwrite_flag = False
         self.template_sitl = """
 from src import python_sitl_functions as Sim
@@ -414,12 +429,18 @@ class SITLProgram:
         """
         self.update_path(n)
         self.parameters = ["Estes_D12.csv",
+                           "None",
+                           "Disabled",
+                           "0",
                            "0.451",
                            "0.351",
+                           "0.301",
                            "0.0662",
                            "0.0601",
+                           "0.0550",
                            "0.55",
                            "0.51",
+                           "0.48",
                            "0.85",
                            "1",
                            "10",
@@ -637,6 +658,23 @@ class SITLProgram:
                         split_index.append(i)
                 res = self._split_list(content, split_index)
                 self.parameters = res[0]
+                if len(self.parameters) == 21:
+                    p_old = self.parameters
+                    self.parameters = [
+                        p_old[0],
+                        "None",
+                        "Disabled",
+                        "0",
+                        p_old[1],
+                        p_old[2],
+                        p_old[2],
+                        p_old[3],
+                        p_old[4],
+                        p_old[4],
+                        p_old[5],
+                        p_old[6],
+                        p_old[6]
+                    ] + p_old[7:21]
                 self.conf_3d = res[1]
                 self.conf_controller = res[2]
                 self.conf_sitl = res[3]
@@ -883,3 +921,32 @@ class SITLProgram:
             thrust data.
         """
         return [copy.deepcopy(self.t_mot), copy.deepcopy(self.thrust_mot)]
+
+    def read_motor2_data(self, name):
+        """
+        Load secondary motor data into the Savefile instance.
+        """
+        self.t_mot2 = [0]
+        self.thrust_mot2 = [0]
+        if not name or name in ("None", "Disabled", ""):
+            return
+        try:
+            with open(motors_path / name, "r", encoding="utf-8") as file:
+                for line in file:
+                    try:
+                        a = float(line.split(",")[0])
+                        b = float(line.split(",")[1])
+                        self.t_mot2.append(a)
+                        self.thrust_mot2.append(b)
+                    except ValueError:
+                        pass
+        except EnvironmentError:
+            print(f"Error Reading Motor 2: {name}")
+
+    def get_motor2_data(self):
+        """
+        Get motor 2 data as a list of [time, thrust].
+        """
+        if len(self.t_mot2) <= 1 and len(self.thrust_mot2) <= 1:
+            return [[], []]
+        return [copy.deepcopy(self.t_mot2), copy.deepcopy(self.thrust_mot2)]
