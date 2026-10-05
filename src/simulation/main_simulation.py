@@ -923,7 +923,27 @@ def simulation():
     ):
         coast_hold_kp = float(getattr(landing_program, "coast_hold_kp", 16.0))
         coast_hold_kd = float(getattr(landing_program, "coast_hold_kd", 8.0))
-        accQ = -coast_hold_kp * theta - coast_hold_kd * Q
+        deadband = float(
+            getattr(landing_program, "coast_hold_deadband_deg", 0.0)
+        ) * DEG2RAD
+        controlled_theta = 0.0 if abs(theta) <= deadband else theta - np.sign(theta) * deadband
+        disturbance_amplitude = float(
+            getattr(landing_program, "coast_disturbance_rad_s2", 0.0)
+        )
+        disturbance_frequency = float(
+            getattr(landing_program, "coast_disturbance_hz", 1.0)
+        )
+        disturbance = disturbance_amplitude * (
+            np.sin(2.0 * np.pi * disturbance_frequency * t)
+            + 0.35 * np.sin(2.0 * np.pi * 0.43 * disturbance_frequency * t + 0.7)
+        )
+        commanded_acceleration = (
+            -coast_hold_kp * controlled_theta - coast_hold_kd * Q + disturbance
+        )
+        acceleration_limit = float(
+            getattr(landing_program, "coast_hold_max_accel_rad_s2", np.inf)
+        )
+        accQ = float(np.clip(commanded_acceleration, -acceleration_limit, acceleration_limit))
 
     # Updates the variables
     U_d.new_f_dd(accx)

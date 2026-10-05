@@ -1,7 +1,7 @@
 """Experimental low-altitude, fixed-motor TVC landing profile.
 
-The separate ideal coast hold represents hardware such as RCS or a reaction
-wheel.  TVC attitude control is used during the landing-motor burn itself.
+The bounded coast hold represents imperfect hardware such as RCS or a reaction
+wheel. TVC attitude control is used during the landing-motor burn itself.
 """
 
 from __future__ import annotations
@@ -26,16 +26,22 @@ class SITLProgram(_BASE.SITLProgram):
         self.deploy_parachute_on_descent = False
 
         # TVC gains used while the fixed landing motor produces thrust.
-        self.descent_pitch_kp = 0.40
+        self.descent_pitch_kp = 0.42
         self.descent_pitch_ki = 0.0
         self.descent_pitch_kd = 0.10
         self.descent_derivative_filter = 0.50
 
-        # Idealized, separate coast-phase attitude system.  This is not TVC;
-        # it exists because an unlit rocket motor cannot generate TVC torque.
+        # Imperfect, separately bounded coast-phase attitude system. This is
+        # not TVC; an unlit rocket motor cannot generate TVC torque. Deadband,
+        # limited authority and deterministic disturbance make the landing
+        # controller visibly work instead of holding an ideal zero attitude.
         self.ideal_coast_attitude_hold = True
-        self.coast_hold_kp = 18.0
-        self.coast_hold_kd = 9.0
+        self.coast_hold_kp = 8.0
+        self.coast_hold_kd = 4.0
+        self.coast_hold_deadband_deg = 1.0
+        self.coast_hold_max_accel_rad_s2 = 2.5
+        self.coast_disturbance_rad_s2 = 0.17
+        self.coast_disturbance_hz = 1.35
 
         self.touchdown_max_vertical_speed_m_s = 2.0
         self.touchdown_max_horizontal_speed_m_s = 2.0
