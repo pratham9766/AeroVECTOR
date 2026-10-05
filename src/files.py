@@ -12,6 +12,7 @@ from pathlib import Path
 import re
 from tkinter import filedialog
 import shutil
+from src.config import LegacyConfigAdapter, LegacyConfigError, LegacySections
 
 
 exports_path = ""
@@ -284,6 +285,12 @@ class SaveFile:
         self.t_mot2 = []
         self.thrust_mot2 = []
         self.overwrite_flag = False
+        # AV1 compatibility bridge: GUI and simulation continue to consume the
+        # historical positional lists, but every load/save passes through a
+        # typed canonical configuration first.
+        self.canonical_config = None
+        self.canonical_validation_issues = []
+        self.config_adapter = LegacyConfigAdapter(motor_directory=motors_path)
         self.template_sitl = """
 from src import python_sitl_functions as Sim
 import importlib
@@ -364,6 +371,7 @@ class SITLProgram:
     """
 
     def _save_all(self, tofile):
+        self._canonicalize_current_sections()
         tofile = self._save_parameters(tofile)
         tofile = self._save_conf_3d(tofile)
         tofile = self._save_conf_controller(tofile)
@@ -644,51 +652,47 @@ class SITLProgram:
     def open_and_split_file(self):
         try:
             with open(self.filepath, "r", encoding="utf-8") as file:
-                content = []
-                split_index = []
-                self.raw_data = []
-                for line in file:
-                    self.raw_data.append(line)
-                    try:
-                        content.append(line.split("=")[1].strip())
-                    except IndexError:
-                        # For the rocket Dimensions
-                        content.append(line.split("=")[0].strip())
-                for i, element in enumerate(content):
-                    if element == "#":
-                        # where to cut the list to send to each tab
-                        split_index.append(i)
-                res = self._split_list(content, split_index)
-                self.parameters = res[0]
-                if len(self.parameters) == 21:
-                    p_old = self.parameters
-                    self.parameters = [
-                        p_old[0],
-                        "None",
-                        "Disabled",
-                        "0",
-                        p_old[1],
-                        p_old[2],
-                        p_old[2],
-                        p_old[3],
-                        p_old[4],
-                        p_old[4],
-                        p_old[5],
-                        p_old[6],
-                        p_old[6]
-                    ] + p_old[7:21]
-                self.conf_3d = res[1]
-                self.conf_controller = res[2]
-                if len(self.conf_controller) == 23:
-                    c_old = self.conf_controller
-                    self.conf_controller = [c_old[0], c_old[1], "True"] + c_old[2:]
-                self.conf_sitl = res[3]
-                self.conf_plots = res[4]
-                self.rocket_dim = res[5]
-                self.error_opening_file_flag = False
-        except EnvironmentError:
+                text = file.read()
+            self.raw_data = text.splitlines(keepends=True)
+            self.canonical_config = self.config_adapter.parse_file(self.filepath)
+            legacy = self.config_adapter.to_legacy_sections(self.canonical_config)
+            self.parameters = list(legacy.parameters)
+            self.conf_3d = list(legacy.display)
+            self.conf_controller = list(legacy.controller)
+            self.conf_sitl = list(legacy.sitl)
+            self.conf_plots = list(legacy.plots)
+            self.rocket_dim = list(legacy.geometry)
+            self.canonical_validation_issues = list(self.canonical_config.validation_issues)
+            if self.canonical_validation_issues:
+                print(f"Configuration validation reported {len(self.canonical_validation_issues)} issue(s).")
+            self.error_opening_file_flag = False
+        except (EnvironmentError, LegacyConfigError, ValueError) as error:
             print("EnvironmentError Opening File")
+            print(f"Configuration error: {error}")
             self.error_opening_file_flag = True
+
+    def _canonicalize_current_sections(self):
+        """Route current GUI-compatible lists through the AV1 canonical model."""
+        sections = LegacySections(
+            tuple(self.parameters),
+            tuple(self.conf_3d),
+            tuple(self.conf_controller),
+            tuple(self.conf_sitl),
+            tuple(self.conf_plots),
+            tuple(self.rocket_dim),
+        )
+        self.canonical_config, legacy = self.config_adapter.canonicalize_sections(
+            sections,
+            source=self.filepath or "legacy-gui",
+        )
+        self.parameters = list(legacy.parameters)
+        self.conf_3d = list(legacy.display)
+        self.conf_controller = list(legacy.controller)
+        self.conf_sitl = list(legacy.sitl)
+        self.conf_plots = list(legacy.plots)
+        self.rocket_dim = list(legacy.geometry)
+        self.canonical_validation_issues = list(self.canonical_config.validation_issues)
+        return self.canonical_config
 
     def check_and_correct_v11_save(self):
         if self.check_file("Wind Gust =", "###"):
@@ -886,6 +890,15 @@ class SITLProgram:
 
     def get_rocket_dim(self):
         return copy.deepcopy(self.rocket_dim)
+
+    def get_canonical_config(self):
+        """Return the immutable AV1 canonical configuration facade."""
+        if self.canonical_config is None and self.parameters:
+            self._canonicalize_current_sections()
+        return self.canonical_config
+
+    def get_canonical_validation_issues(self):
+        return copy.deepcopy(self.canonical_validation_issues)
 
     def read_motor_data(self, name):
         """

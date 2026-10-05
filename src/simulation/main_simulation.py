@@ -80,6 +80,15 @@ parachute_deploy_time = 0.0
 parachute_3d = [False]
 auto_parachute_tilt_abort = True
 
+## TVC LANDING RESULT
+touchdown_detected = False
+touchdown_success = False
+touchdown_time = None
+touchdown_vertical_velocity = None
+touchdown_horizontal_velocity = None
+touchdown_pitch = None
+touchdown_pitch_rate = None
+
 ## SITL GAINS — editable live from the "SITL Gains" GUI tab
 # These are injected into the SITLProgram object at sim start.
 # Any attribute present here that also exists on the SITLProgram
@@ -643,6 +652,9 @@ def reset_variables():
     send_gnss_vel = 0
     global motor2_ignited, apogee_detected, apogee_altitude, apogee_time, v_glob_prev
     global parachute_deployed, parachute_deploy_time, parachute_3d
+    global touchdown_detected, touchdown_success, touchdown_time
+    global touchdown_vertical_velocity, touchdown_horizontal_velocity
+    global touchdown_pitch, touchdown_pitch_rate
     parachute_deployed = False
     parachute_deploy_time = 0.0
     parachute_3d = [False]
@@ -651,6 +663,13 @@ def reset_variables():
     apogee_altitude = 0.0
     apogee_time = 0.0
     v_glob_prev = [0.0, 0.0]
+    touchdown_detected = False
+    touchdown_success = False
+    touchdown_time = None
+    touchdown_vertical_velocity = None
+    touchdown_horizontal_velocity = None
+    touchdown_pitch = None
+    touchdown_pitch_rate = None
     rocket.reset_variables()
 
 
@@ -735,6 +754,27 @@ def update_parameters():
         elif motor2_trigger_mode == "Time After Launch [s]":
             if t >= t_launch + motor2_trigger_value:
                 should_ignite = True
+        elif motor2_trigger_mode == "TVC Landing Burn" and apogee_detected and v_glob[0] < 0:
+            # Suicide-burn predictor for an unthrottled landing motor.  The
+            # configured value is an altitude margin in metres.  Ignition
+            # occurs when the remaining altitude is no greater than the
+            # distance needed to cancel the current downward velocity.
+            burn_duration = max(float(rocket.t_burnout2), 1e-6)
+            mean_thrust = float(np.trapezoid(rocket.motor2[1], rocket.motor2[0]) / burn_duration)
+            estimated_mass = max(float(getattr(rocket, "m", 1.0)), 1e-6)
+            net_upward_acceleration = mean_thrust / estimated_mass - g
+            if net_upward_acceleration > 0:
+                downward_speed = max(-float(v_glob[0]), 0.0)
+                stopping_distance = downward_speed**2 / (2.0 * net_upward_acceleration)
+                ignition_altitude = stopping_distance + max(float(motor2_trigger_value), 0.0)
+                if position_global[0] <= ignition_altitude:
+                    should_ignite = True
+                    print(
+                        "TVC landing ignition solution: "
+                        f"altitude={position_global[0]:.2f} m, "
+                        f"vertical velocity={v_glob[0]:.2f} m/s, "
+                        f"predicted stopping distance={stopping_distance:.2f} m"
+                    )
 
         if should_ignite:
             global parachute_deployed, parachute_deploy_time, auto_parachute_tilt_abort
@@ -865,6 +905,25 @@ def simulation():
         normal_force = z_force - m*g_loc[1]
         force_app_point = Q_moment / normal_force + xcg
         force_app_point = saturate_plot_xa_force_app(force_app_point)
+
+    # Experimental landing profile: represent a separate coast-phase
+    # attitude system (for example RCS or a reaction wheel).  TVC itself has
+    # no authority without thrust, so this hold is deliberately opt-in and
+    # is never applied during either motor burn.
+    landing_program = globals().get("python_sitl_program")
+    coast_hold_enabled = bool(
+        getattr(landing_program, "ideal_coast_attitude_hold", False)
+    )
+    primary_burn_complete = t >= t_launch + rocket.t_burnout
+    if (
+        coast_hold_enabled
+        and primary_burn_complete
+        and not motor2_ignited
+        and not parachute_deployed
+    ):
+        coast_hold_kp = float(getattr(landing_program, "coast_hold_kp", 16.0))
+        coast_hold_kd = float(getattr(landing_program, "coast_hold_kd", 8.0))
+        accQ = -coast_hold_kp * theta - coast_hold_kd * Q
 
     # Updates the variables
     U_d.new_f_dd(accx)
@@ -1367,7 +1426,11 @@ def run_sim_python_sitl():
     global timer_run_sim, timer_run, setpoint, parachute, t_launch, u_servos
     global send_gyro, send_accx, send_accz, send_alt
     global send_gnss_pos, send_gnss_vel
-    global parachute, python_sitl
+    global parachute, python_sitl, python_sitl_program
+    global parachute_deployed, parachute_deploy_time
+    global touchdown_detected, touchdown_success, touchdown_time
+    global touchdown_vertical_velocity, touchdown_horizontal_velocity
+    global touchdown_pitch, touchdown_pitch_rate
     progress_bar = ProgressBar()
 
     timer_gyro = 0
@@ -1386,21 +1449,28 @@ def run_sim_python_sitl():
     # SITLProgram. Works with any module that exposes these attributes.
     # ----------------------------------------------------------------
     global sitl_gains
-    try:
-        _vals = gui.sitl_gains_tab.get_configuration_destringed()
-        _keys_ordered = [
-            "ascent_pitch_kp",  "ascent_pitch_ki",
-            "ascent_pitch_kd",  "ascent_derivative_filter",
-            "descent_pitch_kp", "descent_pitch_ki",
-            "descent_pitch_kd", "descent_derivative_filter",
-        ]
-        for _i, _key in enumerate(_keys_ordered):
-            sitl_gains[_key] = float(_vals[_i])
-    except Exception:
-        pass  # Tab not yet initialised or bad value - keep existing sitl_gains
-    for _key in [k for k in sitl_gains if k != "loaded"]:
-        if hasattr(python_sitl_program, _key):
-            setattr(python_sitl_program, _key, sitl_gains[_key])
+    _keys_ordered = [
+        "ascent_pitch_kp",  "ascent_pitch_ki",
+        "ascent_pitch_kd",  "ascent_derivative_filter",
+        "descent_pitch_kp", "descent_pitch_ki",
+        "descent_pitch_kd", "descent_derivative_filter",
+    ]
+    if getattr(python_sitl_program, "use_profile_gains", False):
+        for _key in _keys_ordered:
+            if hasattr(python_sitl_program, _key):
+                sitl_gains[_key] = float(getattr(python_sitl_program, _key))
+        sitl_gains["loaded"] = True
+        print("[SITL Gains] Using gains locked by the selected SITL profile")
+    else:
+        try:
+            _vals = gui.sitl_gains_tab.get_configuration_destringed()
+            for _i, _key in enumerate(_keys_ordered):
+                sitl_gains[_key] = float(_vals[_i])
+        except Exception:
+            pass  # Tab not yet initialised or bad value - keep existing sitl_gains
+        for _key in _keys_ordered:
+            if hasattr(python_sitl_program, _key):
+                setattr(python_sitl_program, _key, sitl_gains[_key])
     print("[SITL Gains] Ascent  Kp={:.4f} Ki={:.4f} Kd={:.4f} F={:.3f}".format(
         sitl_gains["ascent_pitch_kp"],  sitl_gains["ascent_pitch_ki"],
         sitl_gains["ascent_pitch_kd"],  sitl_gains["ascent_derivative_filter"]))
@@ -1449,6 +1519,53 @@ def run_sim_python_sitl():
                 timer_gnss = t
         progress_bar.update(t, sim_duration)
         plot_data()
+        landing_program = globals().get("python_sitl_program")
+        if (
+            getattr(landing_program, "tvc_landing_mode", False)
+            and position_global[0] <= -0.05
+        ):
+            touchdown_detected = True
+            touchdown_time = t
+            touchdown_vertical_velocity = float(v_glob[0])
+            touchdown_horizontal_velocity = float(v_glob[1])
+            touchdown_pitch = float(theta)
+            touchdown_pitch_rate = float(Q)
+            max_vertical_speed = float(
+                getattr(landing_program, "touchdown_max_vertical_speed_m_s", 1.5)
+            )
+            max_pitch = float(
+                getattr(landing_program, "touchdown_max_pitch_deg", 3.0)
+            ) * DEG2RAD
+            max_pitch_rate = float(
+                getattr(landing_program, "touchdown_max_pitch_rate_deg_s", 5.0)
+            ) * DEG2RAD
+            max_horizontal_speed = float(
+                getattr(landing_program, "touchdown_max_horizontal_speed_m_s", 2.0)
+            )
+            touchdown_success = (
+                abs(touchdown_vertical_velocity) <= max_vertical_speed
+                and abs(touchdown_horizontal_velocity) <= max_horizontal_speed
+                and abs(touchdown_pitch) <= max_pitch
+                and abs(touchdown_pitch_rate) <= max_pitch_rate
+            )
+            progress_bar.update(t, t, 0)
+            if touchdown_success:
+                print(
+                    "\nTVC LANDING SUCCESS: "
+                    f"vz={touchdown_vertical_velocity:.2f} m/s, "
+                    f"vx={touchdown_horizontal_velocity:.2f} m/s, "
+                    f"pitch={touchdown_pitch * RAD2DEG:.2f} deg, "
+                    f"pitch rate={touchdown_pitch_rate * RAD2DEG:.2f} deg/s"
+                )
+            else:
+                print(
+                    "\nTVC LANDING FAILED: "
+                    f"vz={touchdown_vertical_velocity:.2f} m/s, "
+                    f"vx={touchdown_horizontal_velocity:.2f} m/s, "
+                    f"pitch={touchdown_pitch * RAD2DEG:.2f} deg, "
+                    f"pitch rate={touchdown_pitch_rate * RAD2DEG:.2f} deg/s"
+                )
+            break
         if parachute_deployed and position_global[0] < -0.1:
             progress_bar.update(t, t, 0)
             print("\nParachute Soft Landing!")
@@ -1460,10 +1577,10 @@ def run_sim_python_sitl():
             else:
                 print("\nCRASH")
             break
-        if parachute == 1:
-            progress_bar.update(t, t, 0)
-            print("\nParachute Deployed")
-            break
+        if parachute == 1 and not parachute_deployed:
+            parachute_deployed = True
+            parachute_deploy_time = t
+            print("\nParachute Deployed - simulation continuing to ground")
         if t >= sim_duration:
             progress_bar.update(t, t, 0)
             print("\nSimulation Ended")

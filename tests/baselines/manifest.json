@@ -1,0 +1,210 @@
+{
+  "cases": [
+    {
+      "aerodynamic_snapshot_count": 4,
+      "artifacts": {
+        "aerodynamics": "aerodynamics.json",
+        "configuration": "input_config.txt",
+        "plot": "trajectory.png",
+        "trace": "trace.csv"
+      },
+      "case": "legacy_tvc",
+      "copied_config_sha256": "0b98c8bab2ddbc830b7dd1326dd7e77434ee51af9de6fe6fb24c8b555b37a661",
+      "error": null,
+      "events": {
+        "apogee_altitude_m": 117.80291900229908,
+        "apogee_detected": true,
+        "apogee_time_s": 5.818,
+        "motor2_ignited": false,
+        "motor2_ignition_time_s": null,
+        "parachute_deploy_time_s": 0.0,
+        "parachute_deployed": false,
+        "primary_burnout_time_s": 3.45
+      },
+      "final_state": {
+        "altitude_m": -0.5618917243581126,
+        "downrange_m": -7.8114601051616495,
+        "horizontal_velocity_m_s": -2.870675634595808,
+        "mass_kg": 0.6,
+        "pitch_inertia_kg_m2": 0.0601,
+        "pitch_rad": 2.583472956484387,
+        "pitch_rate_rad_s": -0.21490014904294683,
+        "time_s": 15.31,
+        "vertical_velocity_m_s": -18.155799554049405,
+        "xcg_m": 0.51
+      },
+      "git_revision": "276bf18a7594cd77ba25f24de354d5e637630064",
+      "notes": [
+        "Dynamics, aerodynamics, propulsion, actuator, controller, and integrator are the unmodified legacy implementations.",
+        "Tkinter widgets are replaced only by value-returning stubs so the run is headless.",
+        "trace.csv uses the legacy 3-D playback sampling cadence (approximately 0.005 s), not every integration step."
+      ],
+      "platform": "Windows-10-10.0.26200-SP0",
+      "propulsion_inputs": [
+        {
+          "copy": "primary_motor.csv",
+          "copy_sha256": "4cca54e5e944264419224e714b4e817da54ed1502bad66ad3092eb483d244fa5",
+          "role": "primary",
+          "source": "Motors\\Estes_F15.csv",
+          "source_sha256": "4cca54e5e944264419224e714b4e817da54ed1502bad66ad3092eb483d244fa5"
+        }
+      ],
+      "python": "3.11.9",
+      "runtime_seconds": 1.5013937000039732,
+      "sample_count": 2552,
+      "schema_version": 1,
+      "seed": 20261003,
+      "solver": {
+        "controller_sample_time_s": 0.01,
+        "name": "legacy fixed-step trapezoidal",
+        "servo_sample_time_s": 0.02,
+        "sim_delta_t_s": 0.002
+      },
+      "source_config": "3 - Examples\\Others\\Example Rocket TVC.txt",
+      "source_config_sha256": "0b98c8bab2ddbc830b7dd1326dd7e77434ee51af9de6fe6fb24c8b555b37a661",
+      "status": "completed",
+      "track": "AV0"
+    },
+    {
+      "aerodynamic_snapshot_count": 4,
+      "artifacts": {
+        "aerodynamics": "aerodynamics.json",
+        "configuration": "input_config.txt",
+        "plot": "trajectory.png",
+        "trace": "trace.csv"
+      },
+      "case": "legacy_active_fins",
+      "copied_config_sha256": "5f2dcb42a2768b5c7af05eb423420e53aab43f8b2a6871d41d393ccbd1bc7a2d",
+      "error": null,
+      "events": {
+        "apogee_altitude_m": 31.54096793966702,
+        "apogee_detected": true,
+        "apogee_time_s": 4.88,
+        "motor2_ignited": false,
+        "motor2_ignition_time_s": null,
+        "parachute_deploy_time_s": 0.0,
+        "parachute_deployed": false,
+        "primary_burnout_time_s": 13.06
+      },
+      "final_state": {
+        "altitude_m": 61.55881382472646,
+        "downrange_m": -264.1948284702565,
+        "horizontal_velocity_m_s": -43.20140370177025,
+        "mass_kg": 1.0,
+        "pitch_inertia_kg_m2": 0.0662,
+        "pitch_rad": 1.0564037302782485,
+        "pitch_rate_rad_s": -0.03453916316761883,
+        "time_s": 10.0,
+        "vertical_velocity_m_s": 17.648199828155164,
+        "xcg_m": 0.55
+      },
+      "git_revision": "276bf18a7594cd77ba25f24de354d5e637630064",
+      "notes": [
+        "Dynamics, aerodynamics, propulsion, actuator, controller, and integrator are the unmodified legacy implementations.",
+        "Tkinter widgets are replaced only by value-returning stubs so the run is headless.",
+        "trace.csv uses the legacy 3-D playback sampling cadence (approximately 0.005 s), not every integration step."
+      ],
+      "platform": "Windows-10-10.0.26200-SP0",
+      "propulsion_inputs": [
+        {
+          "copy": "primary_motor.csv",
+          "copy_sha256": "ea162d2df70efb9102b7f48c5a1395fecd7686e1b437860c3a70600f58b05a81",
+          "role": "primary",
+          "source": "Motors\\AeroTech_G12.csv",
+          "source_sha256": "ea162d2df70efb9102b7f48c5a1395fecd7686e1b437860c3a70600f58b05a81"
+        }
+      ],
+      "python": "3.11.9",
+      "runtime_seconds": 1.4290523999952711,
+      "sample_count": 2001,
+      "schema_version": 1,
+      "seed": 20261003,
+      "solver": {
+        "controller_sample_time_s": 0.01,
+        "name": "legacy fixed-step trapezoidal",
+        "servo_sample_time_s": 0.02,
+        "sim_delta_t_s": 0.005
+      },
+      "source_config": "3 - Examples\\Others\\Example Rocket Active Fins.txt",
+      "source_config_sha256": "5f2dcb42a2768b5c7af05eb423420e53aab43f8b2a6871d41d393ccbd1bc7a2d",
+      "status": "completed",
+      "track": "AV0"
+    },
+    {
+      "aerodynamic_snapshot_count": 4,
+      "artifacts": {
+        "aerodynamics": "aerodynamics.json",
+        "configuration": "input_config.txt",
+        "plot": "trajectory.png",
+        "trace": "trace.csv"
+      },
+      "case": "dhruva_dual_motor_sitl",
+      "copied_config_sha256": "e4858db045b3834108ff110830ec74ea75dec132e96242c97f9c4e934d1464e4",
+      "error": null,
+      "events": {
+        "apogee_altitude_m": 70.00732166832684,
+        "apogee_detected": true,
+        "apogee_time_s": 3.568,
+        "motor2_ignited": true,
+        "motor2_ignition_time_s": 3.568,
+        "parachute_deploy_time_s": 0.0,
+        "parachute_deployed": false,
+        "primary_burnout_time_s": 0.51
+      },
+      "final_state": {
+        "altitude_m": -0.5570651849547282,
+        "downrange_m": 41.47344758795732,
+        "horizontal_velocity_m_s": 4.968019691525375,
+        "mass_kg": 0.771,
+        "pitch_inertia_kg_m2": 0.021,
+        "pitch_rad": -0.3737332971527701,
+        "pitch_rate_rad_s": -20.179288571694062,
+        "time_s": 8.3,
+        "vertical_velocity_m_s": -24.29187031033632,
+        "xcg_m": 0.4
+      },
+      "git_revision": "276bf18a7594cd77ba25f24de354d5e637630064",
+      "notes": [
+        "Dynamics, aerodynamics, propulsion, actuator, controller, and integrator are the unmodified legacy implementations.",
+        "Tkinter widgets are replaced only by value-returning stubs so the run is headless.",
+        "trace.csv uses the legacy 3-D playback sampling cadence (approximately 0.005 s), not every integration step."
+      ],
+      "platform": "Windows-10-10.0.26200-SP0",
+      "propulsion_inputs": [
+        {
+          "copy": "primary_motor.csv",
+          "copy_sha256": "e423ace67371c2fcb12ebbacfc5f3a72c71f553e22a8da6c33e2cade1a5e9166",
+          "role": "primary",
+          "source": "Motors\\niche wali csv.csv",
+          "source_sha256": "e423ace67371c2fcb12ebbacfc5f3a72c71f553e22a8da6c33e2cade1a5e9166"
+        },
+        {
+          "copy": "secondary_motor.csv",
+          "copy_sha256": "12a910c3bbb0aa44add404615b5bfdc022105da79305b3bcaad03ec7632020f9",
+          "role": "secondary",
+          "source": "Motors\\upr wala csv.csv",
+          "source_sha256": "12a910c3bbb0aa44add404615b5bfdc022105da79305b3bcaad03ec7632020f9"
+        }
+      ],
+      "python": "3.11.9",
+      "runtime_seconds": 0.947829400000046,
+      "sample_count": 1384,
+      "schema_version": 1,
+      "seed": 20261003,
+      "solver": {
+        "controller_sample_time_s": 0.01,
+        "name": "legacy fixed-step trapezoidal",
+        "servo_sample_time_s": 0.02,
+        "sim_delta_t_s": 0.002
+      },
+      "source_config": "3 - Examples\\Example Python SITL\\TVC_Itr01_AeroVECTOR.txt",
+      "source_config_sha256": "e4858db045b3834108ff110830ec74ea75dec132e96242c97f9c4e934d1464e4",
+      "status": "completed",
+      "track": "AV0"
+    }
+  ],
+  "git_revision": "276bf18a7594cd77ba25f24de354d5e637630064",
+  "schema_version": 1,
+  "seed": 20261003,
+  "track": "AV0"
+}

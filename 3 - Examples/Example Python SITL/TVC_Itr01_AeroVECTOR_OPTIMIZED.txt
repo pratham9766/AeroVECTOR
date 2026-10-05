@@ -1,25 +1,25 @@
-Motor = AeroTech_G12.csv
-Motor 2 = None
-Motor 2 Trigger Mode = Disabled
+Motor = niche wali csv.csv
+Motor 2 = upr wala csv.csv
+Motor 2 Trigger Mode = Time After Burnout 1 [s]
 Motor 2 Trigger Value = 0
-Mass Liftoff = 1
-Mass Burnout = 0.8
-Mass Burnout 2 = 0.8
-Iy Liftoff = 0.0662
-Iy Burnout = 0.0601
-Iy Burnout 2 = 0.0601
-Xcg Liftoff = 0.55
-Xcg Burnout = 0.51
-Xcg Burnout 2 = 0.51
-Xt = 0.85
+Mass Liftoff = 1.100
+Mass Burnout = 0.793
+Mass Burnout 2 = 0.771
+Iy Liftoff = 0.029
+Iy Burnout = 0.025
+Iy Burnout 2 = 0.021
+Xcg Liftoff = 0.440
+Xcg Burnout = 0.406
+Xcg Burnout 2 = 0.400
+Xt = 0.765
 Servo Resolution = 1
-Max Actuator Angle = 30
+Max Actuator Angle = 12
 Actuator Reduction = 1
 Initial Misalignment = 0
-Servo Compensation = 2.1
+Servo Compensation = 0
 Wind = 3
 Wind Gust = 0.2
-Launch Rod Length = 1.5
+Launch Rod Length = 1
 Launch Rod Angle = 0
 Motor Misalignment = 0
 Rocket Roughness = 60
@@ -29,30 +29,30 @@ Control Fin Roughness = 60
 Toggle 3D = True
 Camera Shake Toggle = False
 Hide Forces = False
-Variable FOV = True
+Variable FOV = False
 Hide cg = False
 Camera Type = Fixed
-Slow mo = 1
+Slow mo = 5
 Force Scale = 0.2
-FOV = 1
+FOV = 4
 ###=#
 Torque Controller = False
-Anti Windup = False
+Anti Windup = True
 Auto Parachute on Tilt = True
-Input Type = Step [º]
-Kp = 0
-Ki = 0
-Kd = 0
-K All = 0
+Input Type = Up
+Kp = 0.05
+Ki = 0.4
+Kd = 0.01
+K All = 0.3
 K Damping = 0
-Reference Thrust = 0
+Reference Thrust = 30
 Input = 0
 Input time = 0
 Launch Time = 0
 Servo Sample Time = 0.02
-Controller Sample Time = 0
-Maximum Sim Duration = 60
-Sim Delta T = 0.0025
+Controller Sample Time = 0.01
+Maximum Sim Duration = 30
+Sim Delta T = 0.002
 Export T = 0.1
 Launch Altitude = 0
 Initial Altitude = 0
@@ -63,46 +63,46 @@ Initial Pitch Rate = 0
 ###=#
 Activate SITL = True
 Use Sensor Noise = False
-Python SITL=True
-File = DHRUVA_AeroVECTOR_SITL
+Python SITL = True
+File = DHRUVA_AeroVECTOR_SITL_OPTIMIZED
 Port = COM3
 Baudrate = 1000000
-Gyroscope SD = 1
-Accelerometer SD = 0.1
+Gyroscope SD = 0
+Accelerometer SD = 0
 Altimeter SD = 0
-GNSS Pos SD = 0.2
-GNSS Vel SD = 0.1
+GNSS Pos SD = 0
+GNSS Vel SD = 0
 Gyroscope ST = 0.0025
 Accelerometer ST = 0.0025
 Altimeter ST = 0.005
 GNSS ST = 1
 ###=#
 First Plot = Pitch Angle [º]
-Second Plot = Variable SITL 1
+Second Plot = Altitude [m]
 Third Plot = Actuator deflection [º]
-Fourth Plot = Distance Downrange [m]
-Fifth Plot = Simulated GNSS Position [m]
+Fourth Plot = Vertical Velocity [m/s]
+Fifth Plot = Off
 Sixth Plot = Off
 Seventh Plot = Off
 Eighth Plot = Off
 Ninth Plot = Off
 Tenth Plot = Off
 ###=#
-True
-True
+False
 True
 True
 False
+False
 0,0
-0.2,0.066
-1,0.066
+0.15,0.063
+0.65,0.063
 Fins_s
-0.8,0.2
-0.1,0.05
-0.047
-0.003
+0.570371, 0.079629
+0.610371, 0.04
+0.10
+0.005
 Fins_c
-0.2,0.06
-0.04,0.02
-0.047
-0.003
+0, 0
+0, 0
+0
+0

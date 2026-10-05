@@ -1,0 +1,72 @@
+{
+  "aerodynamic_snapshot_count": 4,
+  "artifacts": {
+    "aerodynamics": "aerodynamics.json",
+    "configuration": "input_config.txt",
+    "plot": "trajectory.png",
+    "trace": "trace.csv"
+  },
+  "case": "dhruva_dual_motor_sitl",
+  "copied_config_sha256": "e4858db045b3834108ff110830ec74ea75dec132e96242c97f9c4e934d1464e4",
+  "error": null,
+  "events": {
+    "apogee_altitude_m": 70.00732166832684,
+    "apogee_detected": true,
+    "apogee_time_s": 3.568,
+    "motor2_ignited": true,
+    "motor2_ignition_time_s": 3.568,
+    "parachute_deploy_time_s": 0.0,
+    "parachute_deployed": false,
+    "primary_burnout_time_s": 0.51
+  },
+  "final_state": {
+    "altitude_m": -0.5570651849547282,
+    "downrange_m": 41.47344758795732,
+    "horizontal_velocity_m_s": 4.968019691525375,
+    "mass_kg": 0.771,
+    "pitch_inertia_kg_m2": 0.021,
+    "pitch_rad": -0.3737332971527701,
+    "pitch_rate_rad_s": -20.179288571694062,
+    "time_s": 8.3,
+    "vertical_velocity_m_s": -24.29187031033632,
+    "xcg_m": 0.4
+  },
+  "git_revision": "276bf18a7594cd77ba25f24de354d5e637630064",
+  "notes": [
+    "Dynamics, aerodynamics, propulsion, actuator, controller, and integrator are the unmodified legacy implementations.",
+    "Tkinter widgets are replaced only by value-returning stubs so the run is headless.",
+    "trace.csv uses the legacy 3-D playback sampling cadence (approximately 0.005 s), not every integration step."
+  ],
+  "platform": "Windows-10-10.0.26200-SP0",
+  "propulsion_inputs": [
+    {
+      "copy": "primary_motor.csv",
+      "copy_sha256": "e423ace67371c2fcb12ebbacfc5f3a72c71f553e22a8da6c33e2cade1a5e9166",
+      "role": "primary",
+      "source": "Motors\\niche wali csv.csv",
+      "source_sha256": "e423ace67371c2fcb12ebbacfc5f3a72c71f553e22a8da6c33e2cade1a5e9166"
+    },
+    {
+      "copy": "secondary_motor.csv",
+      "copy_sha256": "12a910c3bbb0aa44add404615b5bfdc022105da79305b3bcaad03ec7632020f9",
+      "role": "secondary",
+      "source": "Motors\\upr wala csv.csv",
+      "source_sha256": "12a910c3bbb0aa44add404615b5bfdc022105da79305b3bcaad03ec7632020f9"
+    }
+  ],
+  "python": "3.11.9",
+  "runtime_seconds": 0.947829400000046,
+  "sample_count": 1384,
+  "schema_version": 1,
+  "seed": 20261003,
+  "solver": {
+    "controller_sample_time_s": 0.01,
+    "name": "legacy fixed-step trapezoidal",
+    "servo_sample_time_s": 0.02,
+    "sim_delta_t_s": 0.002
+  },
+  "source_config": "3 - Examples\\Example Python SITL\\TVC_Itr01_AeroVECTOR.txt",
+  "source_config_sha256": "e4858db045b3834108ff110830ec74ea75dec132e96242c97f9c4e934d1464e4",
+  "status": "completed",
+  "track": "AV0"
+}

@@ -1,0 +1,65 @@
+{
+  "aerodynamic_snapshot_count": 4,
+  "artifacts": {
+    "aerodynamics": "aerodynamics.json",
+    "configuration": "input_config.txt",
+    "plot": "trajectory.png",
+    "trace": "trace.csv"
+  },
+  "case": "legacy_active_fins",
+  "copied_config_sha256": "5f2dcb42a2768b5c7af05eb423420e53aab43f8b2a6871d41d393ccbd1bc7a2d",
+  "error": null,
+  "events": {
+    "apogee_altitude_m": 31.54096793966702,
+    "apogee_detected": true,
+    "apogee_time_s": 4.88,
+    "motor2_ignited": false,
+    "motor2_ignition_time_s": null,
+    "parachute_deploy_time_s": 0.0,
+    "parachute_deployed": false,
+    "primary_burnout_time_s": 13.06
+  },
+  "final_state": {
+    "altitude_m": 61.55881382472646,
+    "downrange_m": -264.1948284702565,
+    "horizontal_velocity_m_s": -43.20140370177025,
+    "mass_kg": 1.0,
+    "pitch_inertia_kg_m2": 0.0662,
+    "pitch_rad": 1.0564037302782485,
+    "pitch_rate_rad_s": -0.03453916316761883,
+    "time_s": 10.0,
+    "vertical_velocity_m_s": 17.648199828155164,
+    "xcg_m": 0.55
+  },
+  "git_revision": "276bf18a7594cd77ba25f24de354d5e637630064",
+  "notes": [
+    "Dynamics, aerodynamics, propulsion, actuator, controller, and integrator are the unmodified legacy implementations.",
+    "Tkinter widgets are replaced only by value-returning stubs so the run is headless.",
+    "trace.csv uses the legacy 3-D playback sampling cadence (approximately 0.005 s), not every integration step."
+  ],
+  "platform": "Windows-10-10.0.26200-SP0",
+  "propulsion_inputs": [
+    {
+      "copy": "primary_motor.csv",
+      "copy_sha256": "ea162d2df70efb9102b7f48c5a1395fecd7686e1b437860c3a70600f58b05a81",
+      "role": "primary",
+      "source": "Motors\\AeroTech_G12.csv",
+      "source_sha256": "ea162d2df70efb9102b7f48c5a1395fecd7686e1b437860c3a70600f58b05a81"
+    }
+  ],
+  "python": "3.11.9",
+  "runtime_seconds": 1.4290523999952711,
+  "sample_count": 2001,
+  "schema_version": 1,
+  "seed": 20261003,
+  "solver": {
+    "controller_sample_time_s": 0.01,
+    "name": "legacy fixed-step trapezoidal",
+    "servo_sample_time_s": 0.02,
+    "sim_delta_t_s": 0.005
+  },
+  "source_config": "3 - Examples\\Others\\Example Rocket Active Fins.txt",
+  "source_config_sha256": "5f2dcb42a2768b5c7af05eb423420e53aab43f8b2a6871d41d393ccbd1bc7a2d",
+  "status": "completed",
+  "track": "AV0"
+}

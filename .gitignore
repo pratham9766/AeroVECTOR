@@ -1,0 +1,9 @@
+.venv/
+**/__pycache__/
+*.py[cod]
+logs/
+
+# Generated optimization and simulation artifacts.  Keep scripts and guides.
+simulation_outputs/*.json
+simulation_outputs/results/
+simulation_outputs/user_dual_motor_distance_apogee/

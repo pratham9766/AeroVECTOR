@@ -204,7 +204,7 @@ def create_parameters_tab(notebook):
              padx=0).grid(row=0, column=0, sticky="NESW", columnspan=3)
     combobox_options = [files.get_motor_names(),
                         files.get_motor2_names(),
-                        ["Disabled", "Distance After Apogee [m]", "Altitude Threshold [m]", "Time After Burnout 1 [s]", "Time After Launch [s]"]]
+                        ["Disabled", "Distance After Apogee [m]", "Altitude Threshold [m]", "Time After Burnout 1 [s]", "Time After Launch [s]", "TVC Landing Burn"]]
     names_combobox = ["Motor = ", "Motor 2 = ", "Motor 2 Trigger Mode = "]
     param_file_tab.create_combobox(combobox_options, names_combobox, 1, 1)
     names_entry = ["Motor 2 Trigger Value = ",

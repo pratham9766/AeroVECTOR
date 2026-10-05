@@ -1,0 +1,110 @@
+[
+  {
+    "input": {
+      "actuator_angle_deg": 0.0,
+      "altitude_m_msl": 0.0,
+      "body_axial_velocity_m_s": 30.0,
+      "body_lateral_velocity_m_s": 0.0,
+      "nominal_aoa_deg": 0.0,
+      "pitch_rate_rad_s": 0.0
+    },
+    "output": {
+      "ca": 0.31598878858781426,
+      "cm_about_cg": 1.0793666849486183e-05,
+      "cn": -2.000012782919493e-06,
+      "cp_from_nose_m": 0.1000016673268424,
+      "fin_ca": [
+        0,
+        0
+      ],
+      "mach": 0.08816917389657807,
+      "passive_fin_cn": [
+        0,
+        0
+      ],
+      "reynolds": 3301736.335287847,
+      "rho_kg_m3": 1.2247647467678038
+    }
+  },
+  {
+    "input": {
+      "actuator_angle_deg": 0.0,
+      "altitude_m_msl": 0.0,
+      "body_axial_velocity_m_s": 30.0,
+      "body_lateral_velocity_m_s": 2.6246599057777202,
+      "nominal_aoa_deg": 5.0,
+      "pitch_rate_rad_s": 0.0
+    },
+    "output": {
+      "ca": 0.3338429452579656,
+      "cm_about_cg": 1.0591110584083177,
+      "cn": -0.27074882287476393,
+      "cp_from_nose_m": 0.19355757424442252,
+      "fin_ca": [
+        0,
+        0
+      ],
+      "mach": 0.08850596581719414,
+      "passive_fin_cn": [
+        0,
+        0
+      ],
+      "reynolds": 3301736.335287847,
+      "rho_kg_m3": 1.2247647467678038
+    }
+  },
+  {
+    "input": {
+      "actuator_angle_deg": 0.0,
+      "altitude_m_msl": 0.0,
+      "body_axial_velocity_m_s": 30.0,
+      "body_lateral_velocity_m_s": 2.6246599057777202,
+      "nominal_aoa_deg": 5.0,
+      "pitch_rate_rad_s": 0.25
+    },
+    "output": {
+      "ca": 0.3338429452579656,
+      "cm_about_cg": 1.0206278854473088,
+      "cn": -0.26377915302081384,
+      "cp_from_nose_m": 0.19623715503360187,
+      "fin_ca": [
+        0,
+        0
+      ],
+      "mach": 0.08850596581719414,
+      "passive_fin_cn": [
+        0,
+        0
+      ],
+      "reynolds": 3301736.335287847,
+      "rho_kg_m3": 1.2247647467678038
+    }
+  },
+  {
+    "input": {
+      "actuator_angle_deg": 5.0,
+      "altitude_m_msl": 0.0,
+      "body_axial_velocity_m_s": 30.0,
+      "body_lateral_velocity_m_s": 2.6246599057777202,
+      "nominal_aoa_deg": 5.0,
+      "pitch_rate_rad_s": 0.25
+    },
+    "output": {
+      "ca": 0.3338429452579656,
+      "cm_about_cg": 1.0206278854473088,
+      "cn": -0.26377915302081384,
+      "cp_from_nose_m": 0.19623715503360187,
+      "fin_ca": [
+        0,
+        0
+      ],
+      "mach": 0.08850596581719414,
+      "passive_fin_cn": [
+        0,
+        0
+      ],
+      "reynolds": 3301736.335287847,
+      "rho_kg_m3": 1.2247647467678038
+    }
+  }
+]
