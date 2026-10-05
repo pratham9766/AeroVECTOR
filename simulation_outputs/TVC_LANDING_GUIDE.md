@@ -26,23 +26,23 @@ Then press **Run Simulation**. This is a separate profile; it does not deploy a 
 
 ## Validated result
 
-Deterministic seed `20261003`, wind 3 m/s, gust standard deviation 0.2 m/s, sensor noise disabled.
+Deterministic seed `20261003`, wind 5 m/s, gust standard deviation 0.5 m/s, sensor noise disabled.
 
 | Metric | Result |
 |---|---:|
-| Apogee | 17.69 m |
-| Apogee time | 2.214 s |
+| Apogee | 17.75 m |
+| Apogee time | 2.222 s |
 | Landing-motor ignition altitude | 6.19 m |
-| Landing-motor ignition time | 3.758 s |
+| Landing-motor ignition time | 3.772 s |
 | Ignition vertical velocity | about -14.67 m/s |
-| Touchdown time | 4.760 s |
-| Touchdown vertical velocity | -1.96 m/s |
-| Touchdown horizontal velocity | 0.71 m/s |
-| Touchdown pitch | 2.91 deg |
-| Touchdown pitch rate | 2.48 deg/s |
-| Maximum descent pitch | about 2.91 deg |
-| Descent pitch RMS | about 1.32 deg |
-| Maximum descent actuator deflection | about 1.32 deg |
+| Touchdown time | 4.776 s |
+| Touchdown vertical velocity | -1.97 m/s |
+| Touchdown horizontal velocity | 1.76 m/s |
+| Touchdown pitch | 1.34 deg |
+| Touchdown pitch rate | -1.16 deg/s |
+| Maximum descent pitch | about 2.49 deg |
+| Descent pitch RMS | about 1.60 deg |
+| Maximum descent actuator deflection | about 2.05 deg |
 | Parachute deployed | No |
 | Result | TVC LANDING SUCCESS |
 
@@ -52,4 +52,4 @@ Success limits are 2.0 m/s vertical speed, 2.0 m/s horizontal speed, 3 deg pitch
 
 The ascent motor file `niche wali csv TVC landing.csv` is a derived 41% thrust version created to study a 15-20 m flight. It is not a measured commercial motor curve. Motor 2 remains the supplied `upr wala csv.csv` curve.
 
-The coast attitude system still represents separate hardware such as RCS or a reaction wheel. It is not TVC: an unlit motor cannot generate TVC torque. Unlike the earlier ideal hold, the model now has a 1 deg deadband, bounded angular acceleration, deterministic disturbance torque, and 0.25 deg motor misalignment. TVC visibly corrects the resulting wobble during the landing burn. The vehicle coasts briefly between motor-2 burnout and contact. Hardware use requires a real low-impulse ascent motor, a real coast attitude system, landing legs rated for the simulated velocities, measured ignition delay, and 3-D validation.
+The coast attitude system still represents separate hardware such as RCS or a reaction wheel. It is not TVC: an unlit motor cannot generate TVC torque. Unlike the earlier ideal hold, the model now has a 2 deg deadband, bounded angular acceleration, stronger deterministic disturbance torque, 0.40 deg motor misalignment, 5 m/s wind, and 0.5 m/s gusts. TVC visibly corrects the sustained wobble during the landing burn. The vehicle coasts briefly between motor-2 burnout and contact. Hardware use requires a real low-impulse ascent motor, a real coast attitude system, landing legs rated for the simulated velocities, measured ignition delay, and 3-D validation.

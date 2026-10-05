@@ -28,7 +28,7 @@ class SITLProgram(_BASE.SITLProgram):
         # TVC gains used while the fixed landing motor produces thrust.
         self.descent_pitch_kp = 0.42
         self.descent_pitch_ki = 0.0
-        self.descent_pitch_kd = 0.10
+        self.descent_pitch_kd = 0.12
         self.descent_derivative_filter = 0.50
 
         # Imperfect, separately bounded coast-phase attitude system. This is
@@ -38,9 +38,9 @@ class SITLProgram(_BASE.SITLProgram):
         self.ideal_coast_attitude_hold = True
         self.coast_hold_kp = 8.0
         self.coast_hold_kd = 4.0
-        self.coast_hold_deadband_deg = 1.0
-        self.coast_hold_max_accel_rad_s2 = 2.5
-        self.coast_disturbance_rad_s2 = 0.17
+        self.coast_hold_deadband_deg = 2.0
+        self.coast_hold_max_accel_rad_s2 = 2.0
+        self.coast_disturbance_rad_s2 = 0.40
         self.coast_disturbance_hz = 1.35
 
         self.touchdown_max_vertical_speed_m_s = 2.0
